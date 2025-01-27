@@ -43,9 +43,18 @@ async function getGeminiResponse(prompt) {
 
     const response = await generativeModel.generateContent(request);
     const result = await response.response;
-    return result.candidates[0].content.parts[0].text;
+    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+
+    // mother_messageのみを返す
+    return jsonResponse.mother_message;
   } catch (error) {
     logger.error("Gemini API error", error);
+    if (error instanceof SyntaxError) {
+      logger.error(
+        "JSON parsing failed. Raw response:",
+        result?.candidates[0]?.content?.parts[0]?.text
+      );
+    }
     throw error;
   }
 }

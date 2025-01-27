@@ -14,7 +14,7 @@ async function processWeatherData() {
 
     logger.info("メッセージを生成中...");
     const prompt = `${WEATHER_MOTHER}\n\n天気予報データ: ${JSON.stringify(weatherData, null, 2)}`;
-    const generatedMessage = await getGeminiResponse(prompt);
+    const motherMessage = await getGeminiResponse(prompt);
 
     logger.info("データを保存中...");
     const documentId = generateDocumentId(AREA_CODE);
@@ -22,12 +22,12 @@ async function processWeatherData() {
       documentId,
       areaCode: AREA_CODE,
       weatherForecasts: JSON.stringify(weatherData),
-      generatedMessage,
+      generatedMessage: motherMessage,
       createdat: new Date(),
     });
 
     logger.info("処理が完了しました！");
-    return { weatherData, generatedMessage };
+    return { weatherData, motherMessage };
   } catch (error) {
     logger.error("処理中にエラーが発生しました", error);
     throw error;
@@ -37,7 +37,7 @@ async function processWeatherData() {
 if (require.main === module) {
   processWeatherData()
     .then((result) => {
-      logger.info(`生成されたメッセージ: ${result.generatedMessage}`);
+      logger.info(`生成されたメッセージ: ${result.motherMessage}`);
     })
     .catch((error) => {
       logger.error("実行エラー", error);
