@@ -1,7 +1,9 @@
 const { VertexAI } = require("@google-cloud/vertexai");
+const { GoogleAuth } = require("google-auth-library");
 const { VERTEX_AI } = require("../config/constants");
 const logger = require("../utils/logger");
 
+// Vertex AI の設定
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 
 async function getGeminiResponse(prompt) {
@@ -26,22 +28,7 @@ async function getGeminiResponse(prompt) {
 
     const response = await generativeModel.generateContent(request);
     const result = await response.response;
-
-    // 生の応答を詳細にログ出力
-    const rawResponse = result.candidates[0].content.parts[0].text;
-    logger.info("=== Gemini Raw Response Start ===");
-    logger.info(rawResponse);
-    logger.info("=== Gemini Raw Response End ===");
-    logger.info("Response Type:", typeof rawResponse);
-    logger.info("Response Length:", rawResponse.length);
-
-    const jsonResponse = JSON.parse(rawResponse);
-
-    if (!jsonResponse.mother_message) {
-      throw new Error("Invalid response format: mother_message not found");
-    }
-
-    return jsonResponse.mother_message;
+    return result.candidates[0].content.parts[0].text;
   } catch (error) {
     logger.error("Gemini API error", error);
     throw error;

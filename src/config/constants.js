@@ -4,6 +4,6 @@ module.exports = {
   COLLECTION_NAME: "weather_data",
   VERTEX_AI: {
     LOCATION: "us-central1",
-    MODEL: "gemini-pro",
+    MODEL: "gemini-2.0-flash-exp",
   },
 };
