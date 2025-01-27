@@ -6,7 +6,7 @@ const logger = require("../utils/logger");
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 const VERTEX_AI_CONFIG = {
   LOCATION: "us-central1",
-  MODEL: "gemini-exp-1206",
+  MODEL: "gemini-1.5-flash",
 };
 
 async function getGeminiResponse(prompt) {
