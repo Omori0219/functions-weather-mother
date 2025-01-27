@@ -26,7 +26,16 @@ async function getGeminiResponse(prompt) {
 
     const response = await generativeModel.generateContent(request);
     const result = await response.response;
-    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+
+    // 生の応答を詳細にログ出力
+    const rawResponse = result.candidates[0].content.parts[0].text;
+    logger.info("=== Gemini Raw Response Start ===");
+    logger.info(rawResponse);
+    logger.info("=== Gemini Raw Response End ===");
+    logger.info("Response Type:", typeof rawResponse);
+    logger.info("Response Length:", rawResponse.length);
+
+    const jsonResponse = JSON.parse(rawResponse);
 
     if (!jsonResponse.mother_message) {
       throw new Error("Invalid response format: mother_message not found");
