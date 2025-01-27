@@ -1,2 +1,7 @@
+# 環境変数
 .env
+
+# Google Cloud の認証情報
+*.json
+
 caen-weathermother-prod-9104920e70e7.json

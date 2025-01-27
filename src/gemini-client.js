@@ -1,7 +1,7 @@
 const { VertexAI } = require("@google-cloud/vertexai");
 
 // Vertex AI の設定
-const projectId = "YOUR_PROJECT_ID";
+const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 const location = "us-central1"; // または適切なリージョン
 const model = "gemini-pro";
 
