@@ -5,7 +5,7 @@ const logger = require("../utils/logger");
 // Vertex AI の設定
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 const VERTEX_AI_CONFIG = {
-  LOCATION: "us-central1",
+  LOCATION: "asia-northeast1",
   MODEL: "gemini-1.5-flash",
 };
 
