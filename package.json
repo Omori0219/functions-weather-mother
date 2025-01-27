@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node src/core/weather-mother.js",
+    "batch": "node src/core/batch-processor.js",
     "lint": "eslint src/",
     "format": "prettier --write src/"
   },
