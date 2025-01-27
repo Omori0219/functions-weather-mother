@@ -20,7 +20,7 @@ const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
 
 // リクエスト間隔の制御用
 let lastRequestTime = 0;
-const minRequestInterval = 5000; // 5秒
+const minRequestInterval = 10000; // 10秒
 
 // スリープ関数
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,7 +32,7 @@ const throttleRequest = async () => {
 
   if (timeSinceLastRequest < minRequestInterval) {
     const waitTime = minRequestInterval - timeSinceLastRequest;
-    console.log(`[INFO] APIレート制限のため${waitTime}ms待機します...`);
+    logger.info(`APIレート制限のため${waitTime / 1000}秒待機します...`);
     await sleep(waitTime);
   }
 
@@ -51,8 +51,8 @@ const withRetry = async (operation) => {
     } catch (error) {
       if (error?.code === 429 && retryCount < MAX_RETRIES) {
         retryCount++;
-        console.log(
-          `[INFO] レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
+        logger.info(
+          `レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
         );
         await sleep(delay);
         delay = Math.min(delay * 2, MAX_RETRY_DELAY);
