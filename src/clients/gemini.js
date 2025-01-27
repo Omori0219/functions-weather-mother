@@ -19,6 +19,14 @@ async function getGeminiResponse(prompt) {
     model: VERTEX_AI_CONFIG.MODEL,
   });
 
+  const response_schema = {
+    type: "object",
+    properties: {
+      mother_message: { type: "string" },
+    },
+    required: ["mother_message"],
+  };
+
   try {
     const request = {
       contents: [
@@ -27,6 +35,10 @@ async function getGeminiResponse(prompt) {
           parts: [{ text: prompt }],
         },
       ],
+      generation_config: {
+        responseMimeType: "application/json",
+        responseSchema: response_schema,
+      },
     };
 
     const response = await generativeModel.generateContent(request);
