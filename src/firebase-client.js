@@ -18,21 +18,21 @@ admin.initializeApp({
 
 const db = getFirestore();
 
-async function saveWeatherData() {
+async function saveWeatherData({ documentId, areaCode, weatherForecasts, generatedMessage, createdat }) {
   try {
-    const docRef = db.collection("weather_data").doc("20250127-130000");
+    const docRef = db.collection("weather_data").doc(documentId);
 
     await docRef.set({
-      area_code: "130000",
-      weather_forecasts: "dummy_weather_data",
-      generated_message: "お昼は10℃くらいだけど、明日の朝は2℃まで冷え込むらしいから、あったかくして行きなさいね。",
-      createdat: admin.firestore.Timestamp.fromMillis(1737954452000), // Unix timestamp を milliseconds に変換
+      area_code: areaCode,
+      weather_forecasts: weatherForecasts,
+      generated_message: generatedMessage,
+      createdat: admin.firestore.Timestamp.fromDate(createdat),
     });
 
     console.log("Document successfully written!");
     return true;
   } catch (error) {
-    console.error("Error writing document: ", error);
+    console.error("Firestore Error:", error);
     throw error;
   }
 }

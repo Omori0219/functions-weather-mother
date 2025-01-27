@@ -15,27 +15,23 @@ async function checkAuth() {
   console.log("Auth client:", client.constructor.name);
 }
 
-async function getGeminiResponse() {
+async function getGeminiResponse(prompt) {
   // ADCを使用するため、認証情報の明示的な指定は不要
   const vertexAI = new VertexAI({
     project: projectId,
     location: location,
   });
 
-  // モデルの取得
   const generativeModel = vertexAI.preview.getGenerativeModel({
     model: model,
   });
-
-  const prompt = "ユーザーの地域の特色を返してください";
-  const userInput = "私は中野区に住んでいます";
 
   try {
     const request = {
       contents: [
         {
           role: "user",
-          parts: [{ text: `${prompt}\n\nユーザー入力: ${userInput}` }],
+          parts: [{ text: prompt }],
         },
       ],
     };
@@ -44,7 +40,7 @@ async function getGeminiResponse() {
     const result = await response.response;
     return result.candidates[0].content.parts[0].text;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Gemini Error:", error);
     throw error;
   }
 }
