@@ -1,19 +1,22 @@
 const { VertexAI } = require("@google-cloud/vertexai");
 const { GoogleAuth } = require("google-auth-library");
-const { VERTEX_AI } = require("../config/constants");
 const logger = require("../utils/logger");
 
 // Vertex AI の設定
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+const VERTEX_AI_CONFIG = {
+  LOCATION: "us-central1",
+  MODEL: "gemini-exp-1206",
+};
 
 async function getGeminiResponse(prompt) {
   const vertexAI = new VertexAI({
     project: projectId,
-    location: VERTEX_AI.LOCATION,
+    location: VERTEX_AI_CONFIG.LOCATION,
   });
 
   const generativeModel = vertexAI.preview.getGenerativeModel({
-    model: VERTEX_AI.MODEL,
+    model: VERTEX_AI_CONFIG.MODEL,
   });
 
   try {
