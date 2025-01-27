@@ -3,30 +3,42 @@ const { processWeatherData } = require("./weather-mother");
 const { PREFECTURE_CODES } = require("../config/prefectures");
 const logger = require("../utils/logger");
 
-// 同時実行数を制限するためのユーティリティ関数
-async function processConcurrently(items, concurrency, processor) {
-  const chunks = [];
-  for (let i = 0; i < items.length; i += concurrency) {
-    chunks.push(items.slice(i, i + concurrency));
+/**
+ * 都道府県の天気データを一括処理する
+ * @param {Array<Object>} prefectures - 処理対象の都道府県リスト
+ */
+async function processPrefectures(prefectures) {
+  console.log("[INFO] ==== バッチ処理開始 ====");
+  const startTime = Date.now();
+
+  let successCount = 0;
+  let failureCount = 0;
+
+  // 都道府県を1つずつ処理
+  for (const prefecture of prefectures) {
+    try {
+      console.log(`[INFO] ${prefecture.name}の処理を開始...`);
+      await processWeatherData(prefecture.code);
+      successCount++;
+    } catch (error) {
+      console.error(`[ERROR] Error processing ${prefecture.name}:`, error);
+      failureCount++;
+
+      // レート制限エラーの場合は一時停止
+      if (error?.code === 429) {
+        console.log("[INFO] レート制限により10秒間待機します...");
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+      }
+    }
   }
 
-  const results = [];
-  for (const chunk of chunks) {
-    const chunkResults = await Promise.all(
-      chunk.map(async (item) => {
-        try {
-          return await processor(item);
-        } catch (error) {
-          logger.error(`Error processing ${item.name}:`, error);
-          return { error, prefecture: item };
-        }
-      })
-    );
-    results.push(...chunkResults);
-    // APIレート制限を考慮して少し待機
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  return results;
+  const endTime = Date.now();
+  const processingTime = ((endTime - startTime) / 1000).toFixed(3);
+
+  console.log("[INFO] ==== 処理完了 ====");
+  console.log(`[INFO] 成功: ${successCount}件`);
+  console.log(`[INFO] 失敗: ${failureCount}件`);
+  console.log(`[INFO] 処理時間: ${processingTime}秒`);
 }
 
 async function processAllPrefectures() {
@@ -34,12 +46,7 @@ async function processAllPrefectures() {
   const startTime = new Date();
 
   try {
-    const results = await processConcurrently(PREFECTURE_CODES, 3, async (prefecture) => {
-      logger.info(`${prefecture.name}の処理を開始...`);
-      const result = await processWeatherData(prefecture.code);
-      logger.info(`${prefecture.name}の処理が完了しました`);
-      return { ...result, prefecture };
-    });
+    const results = await processPrefectures(PREFECTURE_CODES);
 
     // 結果の集計
     const successCount = results.filter((r) => !r.error).length;

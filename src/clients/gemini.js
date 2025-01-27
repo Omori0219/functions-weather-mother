@@ -8,53 +8,60 @@ const VERTEX_AI_CONFIG = {
   LOCATION: "asia-northeast1",
   MODEL: "gemini-1.5-flash",
   // リトライ設定
-  INITIAL_RETRY_DELAY: 1000, // 初期待機時間: 1秒
-  MAX_RETRY_DELAY: 32000, // 最大待機時間: 32秒
+  INITIAL_RETRY_DELAY: 5000, // 5秒
+  MAX_RETRY_DELAY: 60000, // 60秒
   MAX_RETRIES: 5, // 最大リトライ回数
 };
 
-// スロットリング用の変数
-let lastRequestTime = 0;
-const minRequestInterval = 1000; // リクエスト間の最小間隔: 1秒
+// スロットリングとリトライの設定
+const INITIAL_RETRY_DELAY = VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY;
+const MAX_RETRY_DELAY = VERTEX_AI_CONFIG.MAX_RETRY_DELAY;
+const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
 
-// 指定時間待機する関数
+// リクエスト間隔の制御用
+let lastRequestTime = 0;
+const minRequestInterval = 5000; // 5秒
+
+// スリープ関数
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// スロットリング制御関数
-async function throttleRequest() {
+// リクエストの間隔を制御する関数
+const throttleRequest = async () => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
 
   if (timeSinceLastRequest < minRequestInterval) {
-    await sleep(minRequestInterval - timeSinceLastRequest);
+    const waitTime = minRequestInterval - timeSinceLastRequest;
+    console.log(`[INFO] APIレート制限のため${waitTime}ms待機します...`);
+    await sleep(waitTime);
   }
 
   lastRequestTime = Date.now();
-}
+};
 
-// エクスポネンシャルバックオフを使用したリトライ関数
-async function withRetry(operation, retryCount = 0) {
-  try {
-    await throttleRequest(); // リクエスト前にスロットリング制御
-    return await operation();
-  } catch (error) {
-    if (error.code === 429 && retryCount < VERTEX_AI_CONFIG.MAX_RETRIES) {
-      const delay = Math.min(
-        VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY * Math.pow(2, retryCount),
-        VERTEX_AI_CONFIG.MAX_RETRY_DELAY
-      );
+// リトライ処理を行う関数
+const withRetry = async (operation) => {
+  let retryCount = 0;
+  let delay = INITIAL_RETRY_DELAY;
 
-      logger.info(
-        `Rate limit exceeded. Retrying in ${delay / 1000} seconds... (Attempt ${retryCount + 1}/${
-          VERTEX_AI_CONFIG.MAX_RETRIES
-        })`
-      );
-      await sleep(delay);
-      return withRetry(operation, retryCount + 1);
+  while (true) {
+    try {
+      await throttleRequest();
+      return await operation();
+    } catch (error) {
+      if (error?.code === 429 && retryCount < MAX_RETRIES) {
+        retryCount++;
+        console.log(
+          `[INFO] レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
+        );
+        await sleep(delay);
+        delay = Math.min(delay * 2, MAX_RETRY_DELAY);
+        continue;
+      }
+      throw error;
     }
-    throw error;
   }
-}
+};
 
 async function getGeminiResponse(prompt) {
   const vertexAI = new VertexAI({
