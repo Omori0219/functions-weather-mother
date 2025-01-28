@@ -1,18 +1,17 @@
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("./src/utils/logger");
 
 /**
- * 天気予報バッチ処理のエントリーポイント
- * Pub/Subトリガーで実行される
- * @param {Object} event - Pub/Subイベント
- * @param {Object} context - 実行コンテキスト
+ * 天気予報バッチ処理
+ * 毎朝6時に実行
  */
-exports.weatherMotherBatch = async (event, context) => {
-  const batchId = context.eventId;
+exports.weatherMotherBatch = onSchedule("every day 06:00", async (event) => {
+  const batchId = event.id;
 
   try {
     logger.info(`バッチ処理を開始します`, {
       batchId,
-      eventTime: context.timestamp,
+      eventTime: event.time,
     });
 
     // TODO: 実際の処理を実装
@@ -21,15 +20,10 @@ exports.weatherMotherBatch = async (event, context) => {
       batchId,
       success: true,
     });
-
-    return;
   } catch (error) {
     logger.error("バッチ処理でエラーが発生しました", {
       batchId,
       error,
     });
-
-    // エラーをスローせず、正常終了させる（メッセージの再配信を防ぐ）
-    return;
   }
-};
+});
