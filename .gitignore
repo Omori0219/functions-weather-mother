@@ -3,6 +3,3 @@ node_modules
 
 # 環境変数
 .env
-
-# Google Cloud の認証情報
-*.json
