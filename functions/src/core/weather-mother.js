@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { getWeatherForecast } = require("../clients/weather");
 const { getGeminiResponse } = require("../clients/gemini");
 const { saveWeatherData } = require("../clients/firebase");
