@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { processWeatherData } = require("./weather-mother");
 const { PREFECTURE_CODES } = require("../config/prefectures");
 const logger = require("../utils/logger");
