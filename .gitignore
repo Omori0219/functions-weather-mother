@@ -3,3 +3,7 @@ node_modules
 
 # 環境変数
 .env
+
+# ログファイル
+firebase-debug.log
+pub-sub-debug.log
