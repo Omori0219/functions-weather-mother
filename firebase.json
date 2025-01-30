@@ -1,11 +1,7 @@
 {
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
-    }
-  ],
+  "functions": {
+    "source": "functions"
+  },
   "emulators": {
     "functions": {
       "port": 5001
@@ -13,6 +9,12 @@
     "ui": {
       "enabled": true
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "firestore": {
+      "port": 8081
+    },
+    "pubsub": {
+      "port": 8085
+    }
   }
 }
