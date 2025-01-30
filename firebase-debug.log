@@ -1,0 +1,211 @@
+[debug] [2025-01-30T08:06:23.989Z] ----------------------------------------------------------------------
+[debug] [2025-01-30T08:06:23.991Z] Command:       /Users/oomori/.nvm/versions/node/v22.13.1/bin/node /Users/oomori/.nvm/versions/node/v22.13.1/bin/firebase emulators:start --only functions,firestore
+[debug] [2025-01-30T08:06:23.991Z] CLI Version:   13.29.2
+[debug] [2025-01-30T08:06:23.991Z] Platform:      darwin
+[debug] [2025-01-30T08:06:23.991Z] Node Version:  v22.13.1
+[debug] [2025-01-30T08:06:23.991Z] Time:          Thu Jan 30 2025 17:06:23 GMT+0900 (日本標準時)
+[debug] [2025-01-30T08:06:23.991Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-30T08:06:24.148Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-01-30T08:06:24.149Z] > authorizing via signed-in user (info@caen.co.jp)
+[debug] [2025-01-30T08:06:24.200Z] java version "17.0.5" 2022-10-18 LTS
+
+[debug] [2025-01-30T08:06:24.200Z] Java(TM) SE Runtime Environment (build 17.0.5+9-LTS-191)
+Java HotSpot(TM) 64-Bit Server VM (build 17.0.5+9-LTS-191, mixed mode, sharing)
+
+[debug] [2025-01-30T08:06:24.203Z] Parsed Java major version: 17
+[info] i  emulators: Starting emulators: functions, firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, firestore"}}
+[debug] [2025-01-30T08:06:24.618Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.618Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.618Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.618Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8081}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-01-30T08:06:24.620Z] [hub] writing locator at /var/folders/ft/bx_7gqbj4b5b_h_b8j0rsjd40000gn/T/hub-caen-weathermother-prod.json
+[debug] [2025-01-30T08:06:24.870Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.871Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.871Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:06:24.871Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8081}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
+[debug] [2025-01-30T08:06:24.872Z] defaultcredentials: writing to file /Users/oomori/.config/firebase/info_caen_co.jp_application_default_credentials.json
+[debug] [2025-01-30T08:06:24.876Z] Setting GAC to /Users/oomori/.config/firebase/info_caen_co.jp_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/oomori/.config/firebase/info_caen_co.jp_application_default_credentials.json"}}
+[debug] [2025-01-30T08:06:24.876Z] Checked if tokens are valid: true, expires at: 1738225290171
+[debug] [2025-01-30T08:06:24.876Z] Checked if tokens are valid: true, expires at: 1738225290171
+[debug] [2025-01-30T08:06:24.876Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig [none]
+[debug] [2025-01-30T08:06:25.355Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig 200
+[debug] [2025-01-30T08:06:25.356Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig {"projectId":"caen-weathermother-prod","storageBucket":"caen-weathermother-prod.firebasestorage.app"}
+[warn] ⚠  firestore: Cloud Firestore Emulator does not support multiple databases yet. {"metadata":{"emulator":{"name":"firestore"},"message":"Cloud Firestore Emulator does not support multiple databases yet."}}
+[warn] ⚠  firestore: Did not find a Cloud Firestore rules file specified in a firebase.json config file. {"metadata":{"emulator":{"name":"firestore"},"message":"Did not find a Cloud Firestore rules file specified in a firebase.json config file."}}
+[warn] ⚠  firestore: The emulator will default to allowing all reads and writes. Learn more about this option: https://firebase.google.com/docs/emulator-suite/install_and_configure#security_rules_configuration. {"metadata":{"emulator":{"name":"firestore"},"message":"The emulator will default to allowing all reads and writes. Learn more about this option: https://firebase.google.com/docs/emulator-suite/install_and_configure#security_rules_configuration."}}
+[debug] [2025-01-30T08:06:25.378Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-01-30T08:06:25.378Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2025-01-30T08:06:25.378Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/Users/oomori/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8081,"--websocket_port",9150,"--project_id","caen-weathermother-prod","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8081} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/Users/oomori/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8081,\"--websocket_port\",9150,\"--project_id\",\"caen-weathermother-prod\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8081}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to \u001b[1mfirestore-debug.log\u001b[22m"}}
+[debug] [2025-01-30T08:06:25.917Z] Jan 30, 2025 5:06:25 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jan 30, 2025 5:06:25 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2025-01-30T08:06:25.928Z] API endpoint: http:// {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://"}}
+[debug] [2025-01-30T08:06:25.928Z] 127.0.0.1:8081
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8081
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8081
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"127.0.0.1:8081\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8081\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8081\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[info] i  functions: Watching "/Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions\" for Cloud Functions..."}}
+[debug] [2025-01-30T08:06:25.993Z] Validating nodejs source
+[debug] [2025-01-30T08:06:26.300Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "test": "node src/core/batch-processor.js",
+    "test:single": "node -e \"require('./src/core/weather-mother.js').processWeatherData('130000')\""
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.9.2",
+    "dotenv": "^16.4.7",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-01-30T08:06:26.300Z] Building nodejs source
+[debug] [2025-01-30T08:06:26.300Z] Failed to find version of module node: reached end of search path /Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions/node_modules
+[info] ✔  functions: Using node@22 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2025-01-30T08:06:26.302Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-01-30T08:06:26.304Z] Found firebase-functions binary at '/Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8251
+
+[error] (node:94306) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2025-01-30T08:06:26.512Z] Got response from /__/functions.yaml {"endpoints":{"generateWeatherMessages":{"availableMemoryMb":256,"timeoutSeconds":540,"minInstances":null,"maxInstances":1,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 6 * * *","retryConfig":{"retryCount":3},"timeZone":"Asia/Tokyo"},"entryPoint":"generateWeatherMessages"},"generateWeatherMessagesTest":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"generateWeatherMessagesTest"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: generateWeatherMessages, generateWeatherMessagesTest. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: generateWeatherMessages, generateWeatherMessagesTest."}}
+[info] i  functions[us-central1-generateWeatherMessages]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[info] ✔  functions[us-central1-generateWeatherMessagesTest]: http function initialized (http://127.0.0.1:5001/caen-weathermother-prod/us-central1/generateWeatherMessagesTest). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/caen-weathermother-prod/us-central1/generateWeatherMessagesTest)."}}
+[debug] [2025-01-30T08:06:30.531Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Firestore │ 127.0.0.1:8081 │ http://127.0.0.1:4000/firestore │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub running at 127.0.0.1:4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-01-30T08:06:43.095Z] Jan 30, 2025 5:06:43 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jan 30, 2025 5:06:43 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-01-30T08:06:55.095Z] Jan 30, 2025 5:06:55 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jan 30, 2025 5:06:55 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2025-01-30T08:08:56.277Z] ----------------------------------------------------------------------
+[debug] [2025-01-30T08:08:56.279Z] Command:       /Users/oomori/.nvm/versions/node/v22.13.1/bin/node /Users/oomori/.nvm/versions/node/v22.13.1/bin/firebase functions:shell
+[debug] [2025-01-30T08:08:56.279Z] CLI Version:   13.29.2
+[debug] [2025-01-30T08:08:56.279Z] Platform:      darwin
+[debug] [2025-01-30T08:08:56.279Z] Node Version:  v22.13.1
+[debug] [2025-01-30T08:08:56.280Z] Time:          Thu Jan 30 2025 17:08:56 GMT+0900 (日本標準時)
+[debug] [2025-01-30T08:08:56.280Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-30T08:08:56.375Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-01-30T08:08:56.375Z] > authorizing via signed-in user (info@caen.co.jp)
+[debug] [2025-01-30T08:08:56.376Z] [iam] checking project caen-weathermother-prod for permissions ["firebase.projects.get"]
+[debug] [2025-01-30T08:08:56.376Z] Checked if tokens are valid: true, expires at: 1738227994706
+[debug] [2025-01-30T08:08:56.376Z] Checked if tokens are valid: true, expires at: 1738227994706
+[debug] [2025-01-30T08:08:56.376Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/caen-weathermother-prod:testIamPermissions [none]
+[debug] [2025-01-30T08:08:56.376Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/caen-weathermother-prod:testIamPermissions x-goog-quota-user=projects/caen-weathermother-prod
+[debug] [2025-01-30T08:08:56.376Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/caen-weathermother-prod:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-01-30T08:08:57.066Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/caen-weathermother-prod:testIamPermissions 200
+[debug] [2025-01-30T08:08:57.066Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/caen-weathermother-prod:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-01-30T08:08:57.068Z] >>> [apiv2][query] GET http://127.0.0.1:4400/emulators [none]
+[debug] [2025-01-30T08:08:57.071Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
+[debug] [2025-01-30T08:08:57.071Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"ui":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"name":"ui","host":"127.0.0.1","port":4000},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"functions":{"name":"functions","host":"127.0.0.1","port":5001},"firestore":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":8081}],"name":"firestore","host":"127.0.0.1","port":8081,"pid":94299,"reservedPorts":[9150],"webSocketHost":"127.0.0.1","webSocketPort":9150},"eventarc":{"name":"eventarc","host":"127.0.0.1","port":9299},"tasks":{"name":"tasks","host":"127.0.0.1","port":9499}}
+[debug] [2025-01-30T08:08:57.071Z] Running emulators:  {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"ui":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"name":"ui","host":"127.0.0.1","port":4000},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"functions":{"name":"functions","host":"127.0.0.1","port":5001},"firestore":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":8081}],"name":"firestore","host":"127.0.0.1","port":8081,"pid":94299,"reservedPorts":[9150],"webSocketHost":"127.0.0.1","webSocketPort":9150},"eventarc":{"name":"eventarc","host":"127.0.0.1","port":9299},"tasks":{"name":"tasks","host":"127.0.0.1","port":9499}}
+[warn] ⚠  functions: You are already running the Cloud Functions emulator on port 5001. Running the emulator and the Functions shell simultaenously can result in unexpected behavior. 
+[warn] ⚠  functions: Functions Emulator unable to start on port 5000, starting on 5002 instead. {"metadata":{"emulator":{"name":"functions"},"message":"Functions Emulator unable to start on port 5000, starting on 5002 instead."}}
+[debug] [2025-01-30T08:08:57.262Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-01-30T08:08:57.263Z] defaultcredentials: writing to file /Users/oomori/.config/firebase/info_caen_co.jp_application_default_credentials.json
+[debug] [2025-01-30T08:08:57.265Z] DEBUG: Setting GAC to /Users/oomori/.config/firebase/info_caen_co.jp_application_default_credentials.json
+[debug] [2025-01-30T08:08:57.265Z] Checked if tokens are valid: true, expires at: 1738227994706
+[debug] [2025-01-30T08:08:57.265Z] Checked if tokens are valid: true, expires at: 1738227994706
+[debug] [2025-01-30T08:08:57.265Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig [none]
+[debug] [2025-01-30T08:08:57.646Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig 200
+[debug] [2025-01-30T08:08:57.646Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/caen-weathermother-prod/adminSdkConfig {"projectId":"caen-weathermother-prod","storageBucket":"caen-weathermother-prod.firebasestorage.app"}
+[debug] [2025-01-30T08:08:57.660Z] [functions] Watching "/Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions" for Cloud Functions...
+[debug] [2025-01-30T08:08:57.664Z] Validating nodejs source
+[debug] [2025-01-30T08:08:58.107Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "test": "node src/core/batch-processor.js",
+    "test:single": "node -e \"require('./src/core/weather-mother.js').processWeatherData('130000')\""
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.9.2",
+    "dotenv": "^16.4.7",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-01-30T08:08:58.107Z] Building nodejs source
+[debug] [2025-01-30T08:08:58.108Z] Failed to find version of module node: reached end of search path /Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions/node_modules
+[info] ✔  functions: Using node@22 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2025-01-30T08:08:58.109Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-01-30T08:08:58.113Z] Found firebase-functions binary at '/Users/oomori/Developer/WEATHER_MOTHER/weathermother/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8802
+
+[error] (node:94729) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2025-01-30T08:08:58.586Z] Got response from /__/functions.yaml {"endpoints":{"generateWeatherMessages":{"availableMemoryMb":256,"timeoutSeconds":540,"minInstances":null,"maxInstances":1,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 6 * * *","retryConfig":{"retryCount":3},"timeZone":"Asia/Tokyo"},"entryPoint":"generateWeatherMessages"},"generateWeatherMessagesTest":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"generateWeatherMessagesTest"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2025-01-30T08:09:02.615Z] [functions] Loaded functions definitions from source: generateWeatherMessages, generateWeatherMessagesTest.
+[debug] [2025-01-30T08:09:02.616Z] [functions[us-central1-generateWeatherMessages]] function ignored because the pubsub emulator does not exist or is not running.
+[debug] [2025-01-30T08:09:02.616Z] [functions[us-central1-generateWeatherMessagesTest]] http function initialized (http://127.0.0.1:5002/caen-weathermother-prod/us-central1/generateWeatherMessagesTest).
+[info] i  functions: Loaded functions: generateWeatherMessages, generateWeatherMessagesTest 
+[info] i  functions: Connected to running firestore emulator at 127.0.0.1:8081, calls to this service will affect the emulator 
+[info] i  functions: Connected to running eventarc emulator at 127.0.0.1:9299, calls to this service will affect the emulator 
+[info] i  functions: Connected to running tasks emulator at 127.0.0.1:9499, calls to this service will affect the emulator 
+[warn] ⚠  functions: The following emulators are not running, calls to these services will affect production: database, pubsub, storage 
