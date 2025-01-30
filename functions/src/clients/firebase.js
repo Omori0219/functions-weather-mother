@@ -25,10 +25,10 @@ async function saveWeatherData({
     const timestamp = Timestamp.now();
 
     await docRef.set({
-      area_code: areaCode,
-      weather_forecasts: weatherForecasts,
-      generated_message: generatedMessage,
-      createdat: timestamp,
+      areaCode,
+      weatherForecasts,
+      generatedMessage,
+      createdAt: timestamp,
     });
 
     logger.info("Document successfully written!");

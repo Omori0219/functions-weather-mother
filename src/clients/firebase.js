@@ -21,10 +21,10 @@ async function saveWeatherData({
     const docRef = db.collection(COLLECTION_NAME).doc(documentId);
 
     await docRef.set({
-      area_code: areaCode,
-      weather_forecasts: weatherForecasts,
-      generated_message: generatedMessage,
-      createdat: admin.firestore.Timestamp.fromDate(createdat),
+      areaCode,
+      weatherForecasts,
+      generatedMessage,
+      createdAt: admin.firestore.Timestamp.fromDate(createdat),
     });
 
     logger.info("Document successfully written!");
