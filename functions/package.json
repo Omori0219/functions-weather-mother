@@ -6,15 +6,20 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "node src/core/batch-processor.js",
+    "test:single": "node -e \"require('./src/core/weather-mother.js').processWeatherData('130000')\""
   },
   "engines": {
     "node": "22"
   },
   "main": "index.js",
   "dependencies": {
+    "@google-cloud/vertexai": "^1.9.2",
+    "dotenv": "^16.4.7",
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^6.0.1"
+    "firebase-functions": "^6.0.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
