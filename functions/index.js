@@ -7,6 +7,13 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+// 環境変数の設定
+if (process.env.FUNCTIONS_EMULATOR) {
+  require("dotenv").config({ path: ".env.local" });
+} else {
+  require("dotenv").config();
+}
+
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { processAllPrefectures } = require("./src/core/batch-processor");
 const logger = require("./src/utils/logger");
