@@ -3,6 +3,7 @@
 ## プロジェクト概要
 
 Weather Motherは、毎朝の天気予報を基に、お母さんが子供に話しかけるような温かみのあるメッセージを自動生成するサービスです。
+このリポジトリは、Weather Motherのバックエンド機能を提供するCloud Functions部分です。
 
 ### 主な機能
 - 全国47都道府県の天気予報データの取得
@@ -36,7 +37,7 @@ Weather Motherは、毎朝の天気予報を基に、お母さんが子供に話
 ```bash
 # プロジェクトのクローン
 git clone [repository-url]
-cd weathermother
+cd functions-weathermother
 
 # 依存関係のインストール
 cd functions
