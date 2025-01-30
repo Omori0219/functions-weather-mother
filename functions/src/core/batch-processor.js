@@ -59,4 +59,17 @@ async function processAllPrefectures() {
   }
 }
 
+if (require.main === module) {
+  logger.info("バッチ処理を開始します...");
+  processAllPrefectures()
+    .then((results) => {
+      logger.info("バッチ処理が完了しました", results);
+      process.exit(0);
+    })
+    .catch((error) => {
+      logger.error("実行エラー:", error);
+      process.exit(1);
+    });
+}
+
 module.exports = { processAllPrefectures };
