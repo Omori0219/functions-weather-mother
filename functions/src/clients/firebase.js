@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const { COLLECTION_NAME } = require("../config/constants");
 const logger = require("../utils/logger");
 
@@ -22,7 +22,7 @@ async function saveWeatherData({
     const docRef = db.collection(COLLECTION_NAME).doc(documentId);
 
     // Timestampの生成方法を変更
-    const timestamp = admin.firestore.Timestamp.now();
+    const timestamp = Timestamp.now();
 
     await docRef.set({
       area_code: areaCode,
