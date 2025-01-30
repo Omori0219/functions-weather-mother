@@ -26,6 +26,7 @@ exports.generateWeatherMessages = onSchedule(
     maxInstances: 1, // 同時実行インスタンス数
     timeoutSeconds: 540, // タイムアウト: 9分
     memory: "256MiB",
+    region: "asia-northeast1", // 東京リージョン
   },
   async (event) => {
     logger.info("天気予報メッセージ生成処理を開始します...");
@@ -86,63 +87,68 @@ exports.generateWeatherMessages = onSchedule(
 );
 
 // テスト用の関数を追加
-exports.generateWeatherMessagesTest = onRequest(async (req, res) => {
-  logger.info("テスト用天気予報メッセージ生成処理を開始します...");
-  logger.info("==== テストバッチ処理開始 ====");
+exports.generateWeatherMessagesTest = onRequest(
+  {
+    region: "asia-northeast1", // 東京リージョン
+  },
+  async (req, res) => {
+    logger.info("テスト用天気予報メッセージ生成処理を開始します...");
+    logger.info("==== テストバッチ処理開始 ====");
 
-  // テスト用の都道府県コードリスト
-  const testAreaCodes = [
-    { code: "016000", name: "北海道" }, // 北日本
-    { code: "130000", name: "東京都" }, // 関東
-    { code: "270000", name: "大阪府" }, // 関西
-    { code: "471000", name: "沖縄県" }, // 南日本
-  ];
+    // テスト用の都道府県コードリスト
+    const testAreaCodes = [
+      { code: "016000", name: "北海道" }, // 北日本
+      { code: "130000", name: "東京都" }, // 関東
+      { code: "270000", name: "大阪府" }, // 関西
+      { code: "471000", name: "沖縄県" }, // 南日本
+    ];
 
-  try {
-    const results = {
-      success: [],
-      failed: [],
-    };
+    try {
+      const results = {
+        success: [],
+        failed: [],
+      };
 
-    // テスト用の都道府県のみ処理
-    for (const area of testAreaCodes) {
-      logger.info(`${area.name}の処理を開始...`);
-      try {
-        const result = await processWeatherData(area.code);
-        results.success.push({
-          prefecture: area.name,
-          code: area.code,
-          message: result.motherMessage,
-        });
-        logger.info(`${area.name}の処理が完了しました！`);
-      } catch (error) {
-        results.failed.push({
-          prefecture: area.name,
-          code: area.code,
-          error: error.message,
-        });
-        logger.error(`${area.name}の処理中にエラーが発生しました:`, error);
+      // テスト用の都道府県のみ処理
+      for (const area of testAreaCodes) {
+        logger.info(`${area.name}の処理を開始...`);
+        try {
+          const result = await processWeatherData(area.code);
+          results.success.push({
+            prefecture: area.name,
+            code: area.code,
+            message: result.motherMessage,
+          });
+          logger.info(`${area.name}の処理が完了しました！`);
+        } catch (error) {
+          results.failed.push({
+            prefecture: area.name,
+            code: area.code,
+            error: error.message,
+          });
+          logger.error(`${area.name}の処理中にエラーが発生しました:`, error);
+        }
       }
+
+      logger.info("==== テストバッチ処理完了 ====");
+
+      res.json({
+        status: "completed",
+        timestamp: new Date().toISOString(),
+        summary: {
+          total: testAreaCodes.length,
+          success: results.success.length,
+          failed: results.failed.length,
+        },
+        results: results,
+      });
+    } catch (error) {
+      logger.error("テスト実行中にエラーが発生しました", error);
+      res.status(500).json({
+        status: "error",
+        timestamp: new Date().toISOString(),
+        error: error.message,
+      });
     }
-
-    logger.info("==== テストバッチ処理完了 ====");
-
-    res.json({
-      status: "completed",
-      timestamp: new Date().toISOString(),
-      summary: {
-        total: testAreaCodes.length,
-        success: results.success.length,
-        failed: results.failed.length,
-      },
-      results: results,
-    });
-  } catch (error) {
-    logger.error("テスト実行中にエラーが発生しました", error);
-    res.status(500).json({
-      status: "error",
-      timestamp: new Date().toISOString(),
-      error: error.message,
-    });
   }
-});
+);
