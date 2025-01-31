@@ -178,39 +178,8 @@ const testMultipleUsers = async (expoPushTokens) => {
   }
 };
 
-/**
- * すべてのテストを実行する
- * @param {string} expoPushToken - テスト用の有効なプッシュトークン
- */
-const runAllTests = async (expoPushToken) => {
-  try {
-    console.log("🧪 テストを開始します...");
-
-    // 基本的な正常系のテスト
-    console.log("\n1️⃣ 基本的な正常系のテストを実行中...");
-    const basicResult = await testBasicNotification(expoPushToken);
-    console.log("✅ 基本テスト結果:", basicResult);
-
-    // 天気情報未生成のテスト
-    console.log("\n2️⃣ 天気情報未生成のテストを実行中...");
-    const missingResult = await testMissingWeatherData(expoPushToken);
-    console.log("✅ 未生成テスト結果:", missingResult);
-
-    // 複数ユーザーテスト（同じトークンを使い回し）
-    console.log("\n3️⃣ 複数ユーザーテストを実行中...");
-    const multipleResult = await testMultipleUsers([expoPushToken, expoPushToken, expoPushToken]);
-    console.log("✅ 複数ユーザーテスト結果:", multipleResult);
-
-    console.log("\n🎉 すべてのテストが完了しました！");
-  } catch (error) {
-    console.error("❌ テスト実行中にエラーが発生しました:", error);
-    throw error;
-  }
-};
-
 module.exports = {
   testBasicNotification,
   testMissingWeatherData,
   testMultipleUsers,
-  runAllTests,
 };

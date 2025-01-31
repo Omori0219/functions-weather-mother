@@ -20,7 +20,6 @@ const {
   testBasicNotification,
   testMissingWeatherData,
   testMultipleUsers,
-  runAllTests,
 } = require("./src/core/testNotifications");
 
 // Create and deploy your first functions
@@ -322,30 +321,3 @@ exports.testNotifications = onRequest(
     }
   }
 );
-
-// プッシュ通知テスト用のエンドポイント
-exports.testPushNotifications = functions.https.onRequest(async (req, res) => {
-  try {
-    const { expoPushToken } = req.body;
-
-    if (!expoPushToken) {
-      res.status(400).json({
-        error: "プッシュトークンが必要です",
-      });
-      return;
-    }
-
-    await runAllTests(expoPushToken);
-
-    res.json({
-      success: true,
-      message: "プッシュ通知のテストが完了しました",
-    });
-  } catch (error) {
-    console.error("テスト実行中にエラーが発生しました:", error);
-    res.status(500).json({
-      error: "テスト実行中にエラーが発生しました",
-      details: error.message,
-    });
-  }
-});
