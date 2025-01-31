@@ -178,8 +178,28 @@ const testMultipleUsers = async (expoPushTokens) => {
   }
 };
 
+/**
+ * 実際の天気情報を使用した通知テスト
+ * 既存のユーザーデータを使用して通知をテストします
+ */
+const testRealWeatherNotification = async () => {
+  try {
+    // 通知送信
+    const { sendNotificationsToAllUsers } = require("./sendNotifications");
+    await sendNotificationsToAllUsers();
+
+    return {
+      success: true,
+      message: "実際の天気情報を使用した通知テストが完了しました",
+    };
+  } catch (error) {
+    throw new Error(`実際の天気情報を使用した通知テストが失敗しました: ${error.message}`);
+  }
+};
+
 module.exports = {
   testBasicNotification,
   testMissingWeatherData,
   testMultipleUsers,
+  testRealWeatherNotification,
 };

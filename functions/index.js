@@ -20,6 +20,7 @@ const {
   testBasicNotification,
   testMissingWeatherData,
   testMultipleUsers,
+  testRealWeatherNotification,
 } = require("./src/core/testNotifications");
 
 // Create and deploy your first functions
@@ -304,6 +305,10 @@ exports.testNotifications = onRequest(
             throw new Error("expoPushTokensの配列が必要です");
           }
           result = await testMultipleUsers(expoPushTokens);
+          break;
+
+        case "realWeather":
+          result = await testRealWeatherNotification();
           break;
 
         default:
