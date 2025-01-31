@@ -75,10 +75,10 @@ firebase functions:shell
 ```
 weather_data/
   └── YYYYMMDD-areaCode/
-       ├── area_code: string
-       ├── weather_forecasts: string (JSON)
-       ├── generated_message: string
-       └── createdat: timestamp
+       ├── areaCode: string
+       ├── weatherForecasts: string (JSON)
+       ├── generatedMessage: string
+       └── createdAt: timestamp
 ```
 
 ### スケジュール実行の仕様

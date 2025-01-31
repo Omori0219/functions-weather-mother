@@ -20,7 +20,7 @@ const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
 
 // リクエスト間隔の制御用
 let lastRequestTime = 0;
-const minRequestInterval = 10000; // 10秒
+const minRequestInterval = 20000; // 20秒に変更
 
 // スリープ関数
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,7 +32,7 @@ const throttleRequest = async () => {
 
   if (timeSinceLastRequest < minRequestInterval) {
     const waitTime = minRequestInterval - timeSinceLastRequest;
-    logger.info(`APIレート制限のため${waitTime / 1000}秒待機します...`);
+    logger.info(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
     await sleep(waitTime);
   }
 

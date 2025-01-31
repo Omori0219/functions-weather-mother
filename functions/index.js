@@ -9,7 +9,7 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest } = require("firebase-functions/v2/https");
-const { processAllPrefectures } = require("./src/core/batch-processor");
+const { processAllPrefectures, processPrefectures } = require("./src/core/batch-processor");
 const { processWeatherData } = require("./src/core/weather-mother");
 const { PREFECTURE_CODES } = require("./src/config/prefectures");
 const logger = require("./src/utils/logger");
@@ -74,7 +74,7 @@ exports.generateWeatherMessages = onSchedule(
         results: results,
       };
 
-      logger.info("実行結果:", executionResult);
+      logger.info("実行結果", executionResult);
       return executionResult;
     } catch (error) {
       const errorResult = {
@@ -82,7 +82,7 @@ exports.generateWeatherMessages = onSchedule(
         timestamp: new Date().toISOString(),
         error: error.message,
       };
-      logger.error("バッチ処理全体でエラーが発生しました:", errorResult);
+      logger.error("バッチ処理全体でエラーが発生しました", errorResult);
       throw new Error(JSON.stringify(errorResult));
     }
   }
@@ -91,66 +91,45 @@ exports.generateWeatherMessages = onSchedule(
 // テスト用の関数を追加
 exports.generateWeatherMessagesTest = onRequest(
   {
-    region: "asia-northeast1", // 東京リージョン
+    timeoutSeconds: 540, // タイムアウト: 9分
+    memory: "256MiB",
+    region: "asia-northeast1",
   },
   async (req, res) => {
-    logger.info("テスト用天気予報メッセージ生成処理を開始します...");
+    logger.info("テスト用の天気予報メッセージ生成処理を開始します...");
     logger.info("==== テストバッチ処理開始 ====");
 
-    // テスト用の都道府県コードリスト
-    const testAreaCodes = [
-      { code: "016000", name: "北海道" }, // 北日本
-      { code: "130000", name: "東京都" }, // 関東
-      { code: "270000", name: "大阪府" }, // 関西
-      { code: "471000", name: "沖縄県" }, // 南日本
-    ];
-
     try {
-      const results = {
-        success: [],
-        failed: [],
-      };
+      // テスト用の都道府県（北海道、東京、大阪、沖縄）
+      const testPrefectures = PREFECTURE_CODES.filter((p) =>
+        ["016000", "130000", "270000", "471000"].includes(p.code)
+      );
 
-      // テスト用の都道府県のみ処理
-      for (const area of testAreaCodes) {
-        logger.info(`${area.name}の処理を開始...`);
-        try {
-          const result = await processWeatherData(area.code);
-          results.success.push({
-            prefecture: area.name,
-            code: area.code,
-            message: result.motherMessage,
-          });
-          logger.info(`${area.name}の処理が完了しました！`);
-        } catch (error) {
-          results.failed.push({
-            prefecture: area.name,
-            code: area.code,
-            error: error.message,
-          });
-          logger.error(`${area.name}の処理中にエラーが発生しました:`, error);
-        }
-      }
+      const results = await processPrefectures(testPrefectures);
 
-      logger.info("==== テストバッチ処理完了 ====");
-
-      res.json({
+      const executionResult = {
         status: "completed",
         timestamp: new Date().toISOString(),
         summary: {
-          total: testAreaCodes.length,
-          success: results.success.length,
-          failed: results.failed.length,
+          total: testPrefectures.length,
+          success: results.successCount,
+          failed: results.failureCount,
         },
         results: results,
-      });
+      };
+
+      // 実行結果をログに出力
+      logger.info("実行結果", executionResult);
+
+      res.json(executionResult);
     } catch (error) {
-      logger.error("テスト実行中にエラーが発生しました", error);
-      res.status(500).json({
+      const errorResult = {
         status: "error",
         timestamp: new Date().toISOString(),
         error: error.message,
-      });
+      };
+      logger.error("テスト実行中にエラーが発生しました", errorResult);
+      res.status(500).json(errorResult);
     }
   }
 );

@@ -1,12 +1,11 @@
 const admin = require("firebase-admin");
-const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+const { getFirestore } = require("firebase-admin/firestore");
 const { COLLECTION_NAME } = require("../config/constants");
 const logger = require("../utils/logger");
 
-// Firebase Admin の初期化
-const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || "demo-weathermother";
+// Firebase Admin の初期化（ADCを使用）
 admin.initializeApp({
-  projectId: projectId,
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
 });
 
 const db = getFirestore();
@@ -21,14 +20,11 @@ async function saveWeatherData({
   try {
     const docRef = db.collection(COLLECTION_NAME).doc(documentId);
 
-    // Timestampの生成方法を変更
-    const timestamp = Timestamp.now();
-
     await docRef.set({
       areaCode,
       weatherForecasts,
       generatedMessage,
-      createdAt: timestamp,
+      createdAt: admin.firestore.Timestamp.fromDate(createdat),
     });
 
     logger.info("Document successfully written!");

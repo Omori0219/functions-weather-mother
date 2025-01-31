@@ -33,4 +33,16 @@ async function processWeatherData(areaCode) {
   }
 }
 
+if (require.main === module) {
+  const defaultAreaCode = "130000"; // デフォルトは東京
+  processWeatherData(defaultAreaCode)
+    .then((result) => {
+      logger.info(`生成されたメッセージ: ${result.motherMessage}`);
+    })
+    .catch((error) => {
+      logger.error("実行エラー:", error);
+      process.exit(1);
+    });
+}
+
 module.exports = { processWeatherData };

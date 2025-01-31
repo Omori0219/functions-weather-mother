@@ -1,4 +1,3 @@
-// Node.js v22ではfetchはグローバルに利用可能
 const logger = require("../utils/logger");
 
 async function getWeatherForecast(areaId) {
