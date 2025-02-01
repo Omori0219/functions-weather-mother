@@ -5,11 +5,20 @@
 
 const admin = require("firebase-admin");
 const { isTestEnvironment } = require("../../src/config/environment");
+const { COLLECTIONS } = require("../../src/config/firestore");
+const { info, error } = require("../../src/utils/logger");
 
 class TestDataManager {
   constructor() {
     this.createdUserIds = [];
     this.createdWeatherIds = [];
+
+    // Firebase Admin の初期化（まだ初期化されていない場合）
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      });
+    }
   }
 
   /**
@@ -23,13 +32,14 @@ class TestDataManager {
     }
 
     const db = admin.firestore();
-    const userRef = await db.collection("users").add({
+    const userRef = await db.collection(COLLECTIONS.USERS).add({
       ...userData,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     this.createdUserIds.push(userRef.id);
+    info("テストユーザーを作成しました", { userId: userRef.id });
     return userRef.id;
   }
 
@@ -49,7 +59,7 @@ class TestDataManager {
     const docId = `${formattedDate}-${areaCode}`;
 
     await db
-      .collection("weather_data")
+      .collection(COLLECTIONS.WEATHER_DATA)
       .doc(docId)
       .set({
         areaCode: areaCode,
@@ -59,6 +69,7 @@ class TestDataManager {
       });
 
     this.createdWeatherIds.push(docId);
+    info("テスト用の天気情報を作成しました", { docId });
     return docId;
   }
 
@@ -70,24 +81,30 @@ class TestDataManager {
       throw new Error("テスト環境でのみ実行可能です");
     }
 
-    const db = admin.firestore();
-    const batch = db.batch();
+    try {
+      const db = admin.firestore();
+      const batch = db.batch();
 
-    // ユーザーの削除
-    this.createdUserIds.forEach((userId) => {
-      batch.delete(db.collection("users").doc(userId));
-    });
+      // ユーザーの削除
+      this.createdUserIds.forEach((userId) => {
+        batch.delete(db.collection(COLLECTIONS.USERS).doc(userId));
+      });
 
-    // 天気情報の削除
-    this.createdWeatherIds.forEach((weatherId) => {
-      batch.delete(db.collection("weather_data").doc(weatherId));
-    });
+      // 天気情報の削除
+      this.createdWeatherIds.forEach((weatherId) => {
+        batch.delete(db.collection(COLLECTIONS.WEATHER_DATA).doc(weatherId));
+      });
 
-    await batch.commit();
+      await batch.commit();
+      info("テストデータをクリーンアップしました");
 
-    // 配列をクリア
-    this.createdUserIds = [];
-    this.createdWeatherIds = [];
+      // 配列をクリア
+      this.createdUserIds = [];
+      this.createdWeatherIds = [];
+    } catch (err) {
+      error("テストデータのクリーンアップに失敗", { error: err });
+      throw err;
+    }
   }
 }
 

@@ -4,7 +4,7 @@
  */
 
 const { TestDataManager } = require("../test-helper");
-const { sendPushNotification } = require("../../../src/core/notification");
+const { sendPushNotification } = require("../../../src/core/notification/notification");
 const { isTestEnvironment } = require("../../../src/config/environment");
 
 /**
