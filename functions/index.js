@@ -20,6 +20,64 @@ const { sendNotificationsToAllUsers } = require("./src/core/notification/sendNot
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
+// 天気予報メッセージ生成の共通処理
+async function generateWeatherMessagesProcess() {
+  logger.info("天気予報メッセージ生成処理を開始します...");
+  logger.info("==== バッチ処理開始 ====");
+
+  try {
+    const results = {
+      success: [],
+      failed: [],
+    };
+
+    // 全都道府県を処理
+    for (const prefecture of PREFECTURE_CODES) {
+      logger.info(`${prefecture.name}の処理を開始...`);
+      try {
+        const result = await processWeatherData(prefecture.code);
+        results.success.push({
+          prefecture: prefecture.name,
+          code: prefecture.code,
+          message: result.motherMessage,
+        });
+        logger.info(`${prefecture.name}の処理が完了しました！`);
+      } catch (error) {
+        results.failed.push({
+          prefecture: prefecture.name,
+          code: prefecture.code,
+          error: error.message,
+        });
+        logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
+      }
+    }
+
+    logger.info("==== バッチ処理完了 ====");
+
+    const executionResult = {
+      status: "completed",
+      timestamp: new Date().toISOString(),
+      summary: {
+        total: PREFECTURE_CODES.length,
+        success: results.success.length,
+        failed: results.failed.length,
+      },
+      results: results,
+    };
+
+    logger.info("実行結果", executionResult);
+    return executionResult;
+  } catch (error) {
+    const errorResult = {
+      status: "error",
+      timestamp: new Date().toISOString(),
+      error: error.message,
+    };
+    logger.error("バッチ処理全体でエラーが発生しました", errorResult);
+    throw new Error(JSON.stringify(errorResult));
+  }
+}
+
 // 毎朝6時に実行
 exports.generateWeatherMessages = onSchedule(
   {
@@ -32,59 +90,37 @@ exports.generateWeatherMessages = onSchedule(
     region: "asia-northeast1", // 東京リージョン
   },
   async (event) => {
-    logger.info("天気予報メッセージ生成処理を開始します...");
-    logger.info("==== バッチ処理開始 ====");
+    return await generateWeatherMessagesProcess();
+  }
+);
+
+// 手動実行用エンドポイント
+exports.generateWeatherMessagesManual = onRequest(
+  {
+    timeoutSeconds: 540, // タイムアウト: 9分
+    memory: "256MiB",
+    region: "asia-northeast1",
+  },
+  async (req, res) => {
+    // Basic認証でセキュリティを確保
+    const authHeader = req.headers.authorization || "";
+    const expectedAuth = `Basic ${Buffer.from(`admin:${process.env.MANUAL_EXEC_SECRET}`).toString(
+      "base64"
+    )}`;
+
+    if (authHeader !== expectedAuth) {
+      res.status(401).send("Unauthorized");
+      return;
+    }
 
     try {
-      const results = {
-        success: [],
-        failed: [],
-      };
-
-      // 全都道府県を処理
-      for (const prefecture of PREFECTURE_CODES) {
-        logger.info(`${prefecture.name}の処理を開始...`);
-        try {
-          const result = await processWeatherData(prefecture.code);
-          results.success.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            message: result.motherMessage,
-          });
-          logger.info(`${prefecture.name}の処理が完了しました！`);
-        } catch (error) {
-          results.failed.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            error: error.message,
-          });
-          logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
-        }
-      }
-
-      logger.info("==== バッチ処理完了 ====");
-
-      const executionResult = {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        summary: {
-          total: PREFECTURE_CODES.length,
-          success: results.success.length,
-          failed: results.failed.length,
-        },
-        results: results,
-      };
-
-      logger.info("実行結果", executionResult);
-      return executionResult;
+      const result = await generateWeatherMessagesProcess();
+      res.json(result);
     } catch (error) {
-      const errorResult = {
+      res.status(500).json({
         status: "error",
-        timestamp: new Date().toISOString(),
         error: error.message,
-      };
-      logger.error("バッチ処理全体でエラーが発生しました", errorResult);
-      throw new Error(JSON.stringify(errorResult));
+      });
     }
   }
 );
