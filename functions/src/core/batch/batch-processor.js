@@ -14,15 +14,26 @@ const { info, error } = require("../../utils/logger");
  * @returns {Promise<void>}
  */
 async function processBatch() {
-  try {
-    info("バッチ処理を開始");
+  const startTime = Date.now();
+  const batchId = `batch_${startTime}`;
 
+  info("バッチ処理を開始", {
+    operation: "processBatch",
+    batchId,
+    maxBatchSize: LIMITS.MAX_BATCH_SIZE,
+  });
+
+  try {
     // 処理対象の地域を取得
     const db = admin.firestore();
     const usersSnapshot = await db.collection(COLLECTIONS.USERS).limit(LIMITS.MAX_BATCH_SIZE).get();
 
     if (usersSnapshot.empty) {
-      info("処理対象のユーザーが存在しません");
+      info("処理対象のユーザーが存在しません", {
+        operation: "processBatch",
+        batchId,
+        collection: COLLECTIONS.USERS,
+      });
       return;
     }
 
@@ -35,11 +46,29 @@ async function processBatch() {
       }
     });
 
-    info(`処理対象の地域数: ${areaCodes.size}`);
+    info("処理対象の地域を特定", {
+      operation: "processBatch",
+      batchId,
+      totalAreas: areaCodes.size,
+      areas: Array.from(areaCodes),
+    });
+
+    // 処理結果の集計用
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
 
     // 各地域の天気予報を生成
     for (const areaCode of areaCodes) {
+      const areaStartTime = Date.now();
       try {
+        info("地域の天気予報生成を開始", {
+          operation: "generateWeatherForecast",
+          batchId,
+          areaCode,
+          progress: `${successCount + errorCount + 1}/${areaCodes.size}`,
+        });
+
         // 天気予報データの生成（実際のAPIコール等は省略）
         const weatherData = {
           temperature: 25,
@@ -48,17 +77,62 @@ async function processBatch() {
         };
 
         await generateWeatherForecast(areaCode, weatherData);
+        successCount++;
+
+        const areaEndTime = Date.now();
+        info("地域の天気予報生成が完了", {
+          operation: "generateWeatherForecast",
+          batchId,
+          areaCode,
+          status: "success",
+          processingTimeMs: areaEndTime - areaStartTime,
+        });
       } catch (err) {
-        error("地域の天気予報生成に失敗", { areaCode, error: err });
+        errorCount++;
+        errors.push({
+          areaCode,
+          error: err.message,
+        });
+
+        error("地域の天気予報生成に失敗", {
+          operation: "generateWeatherForecast",
+          batchId,
+          areaCode,
+          error: err,
+          processingTimeMs: Date.now() - areaStartTime,
+        });
       }
     }
 
     // 通知送信
+    info("通知送信を開始", {
+      operation: "sendNotifications",
+      batchId,
+    });
+
     await sendNotificationsToAllUsers();
 
-    info("バッチ処理を完了");
+    const endTime = Date.now();
+    info("バッチ処理が完了", {
+      operation: "processBatch",
+      batchId,
+      status: "completed",
+      summary: {
+        totalAreas: areaCodes.size,
+        successCount,
+        errorCount,
+        errors: errors.length > 0 ? errors : undefined,
+      },
+      processingTimeMs: endTime - startTime,
+    });
   } catch (err) {
-    error("バッチ処理全体が失敗", { error: err });
+    const endTime = Date.now();
+    error("バッチ処理全体が失敗", {
+      operation: "processBatch",
+      batchId,
+      error: err,
+      processingTimeMs: endTime - startTime,
+    });
     throw err;
   }
 }
