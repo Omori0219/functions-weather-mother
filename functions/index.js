@@ -9,7 +9,7 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest } = require("firebase-functions/v2/https");
-const { processAllPrefectures, processPrefectures } = require("./src/core/batch-processor");
+const { processBatch } = require("./src/core/batch/batch-processor");
 const { processWeatherData } = require("./src/core/weather-mother");
 const { PREFECTURE_CODES } = require("./src/config/prefectures");
 const logger = require("./src/utils/logger");
