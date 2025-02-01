@@ -1,5 +1,8 @@
 node_modules/
 .env
+.env.local
+.env.test
+.env.prod
 ui-debug.log
 firebase-debug.log
 *.local
