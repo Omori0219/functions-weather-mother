@@ -17,14 +17,6 @@ const { getDb } = require("./src/utils/firestore");
 const { COLLECTIONS } = require("./src/config/firestore");
 const { sendNotificationsToAllUsers } = require("./src/core/notification/sendNotifications");
 
-// テスト関連のインポートは一時的にコメントアウト
-// const {
-//   testBasicNotification,
-//   testMissingWeatherData,
-//   testMultipleUsers,
-//   testRealWeatherNotification,
-// } = require("./src/core/notification/testNotifications");
-
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
@@ -93,52 +85,6 @@ exports.generateWeatherMessages = onSchedule(
       };
       logger.error("バッチ処理全体でエラーが発生しました", errorResult);
       throw new Error(JSON.stringify(errorResult));
-    }
-  }
-);
-
-// テスト用の関数を追加
-exports.generateWeatherMessagesTest = onRequest(
-  {
-    timeoutSeconds: 540, // タイムアウト: 9分
-    memory: "256MiB",
-    region: "asia-northeast1",
-  },
-  async (req, res) => {
-    logger.info("テスト用の天気予報メッセージ生成処理を開始します...");
-    logger.info("==== テストバッチ処理開始 ====");
-
-    try {
-      // テスト用の都道府県（北海道、東京、大阪、沖縄）
-      const testPrefectures = PREFECTURE_CODES.filter((p) =>
-        ["016000", "130000", "270000", "471000"].includes(p.code)
-      );
-
-      const results = await processPrefectures(testPrefectures);
-
-      const executionResult = {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        summary: {
-          total: testPrefectures.length,
-          success: results.successCount,
-          failed: results.failureCount,
-        },
-        results: results,
-      };
-
-      // 実行結果をログに出力
-      logger.info("実行結果", executionResult);
-
-      res.json(executionResult);
-    } catch (error) {
-      const errorResult = {
-        status: "error",
-        timestamp: new Date().toISOString(),
-        error: error.message,
-      };
-      logger.error("テスト実行中にエラーが発生しました", errorResult);
-      res.status(500).json(errorResult);
     }
   }
 );
@@ -259,72 +205,6 @@ exports.sendMorningNotifications = onSchedule(
       };
       logger.error("プッシュ通知送信中にエラーが発生しました", errorResult);
       throw new Error(JSON.stringify(errorResult));
-    }
-  }
-);
-
-// プッシュ通知のテスト用エンドポイント
-exports.testNotifications = onRequest(
-  {
-    timeoutSeconds: 540, // タイムアウト: 9分
-    memory: "256MiB",
-    region: "asia-northeast1",
-  },
-  async (req, res) => {
-    // Basic認証チェック
-    const authHeader = req.headers.authorization || "";
-    const expectedAuth = `Basic ${Buffer.from(`admin:${process.env.TEST_SECRET}`).toString(
-      "base64"
-    )}`;
-
-    if (authHeader !== expectedAuth) {
-      res.status(401).send("Unauthorized");
-      return;
-    }
-
-    try {
-      logger.info("プッシュ通知テストを開始します...");
-      const { testType, expoPushToken, expoPushTokens } = req.body;
-
-      let result;
-      switch (testType) {
-        case "basic":
-          if (!expoPushToken) {
-            throw new Error("expoPushTokenが必要です");
-          }
-          result = await testBasicNotification(expoPushToken);
-          break;
-
-        case "missingWeather":
-          if (!expoPushToken) {
-            throw new Error("expoPushTokenが必要です");
-          }
-          result = await testMissingWeatherData(expoPushToken);
-          break;
-
-        case "multipleUsers":
-          if (!expoPushTokens || !Array.isArray(expoPushTokens)) {
-            throw new Error("expoPushTokensの配列が必要です");
-          }
-          result = await testMultipleUsers(expoPushTokens);
-          break;
-
-        case "realWeather":
-          result = await testRealWeatherNotification();
-          break;
-
-        default:
-          throw new Error("無効なテストタイプです");
-      }
-
-      logger.info("テスト結果:", result);
-      res.json(result);
-    } catch (error) {
-      logger.error("テスト実行中にエラーが発生しました:", error);
-      res.status(500).json({
-        status: "error",
-        error: error.message,
-      });
     }
   }
 );
