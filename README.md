@@ -45,13 +45,27 @@ npm install
 ```
 
 ### 環境変数の設定
-\`functions/.env\`ファイルを作成し、以下の環境変数を設定：
+環境別の設定ファイルを作成：
+- `functions/.env.local` - ローカル開発環境用
+- `functions/.env.test` - テスト環境用
+- `functions/.env.prod` - 本番環境用
+
+各ファイルに必要な環境変数を設定：
 ```env
+# 必須の環境変数
 GOOGLE_CLOUD_PROJECT_ID=your-project-id
+VERTEX_AI_LOCATION=asia-northeast1
+VERTEX_AI_MODEL=gemini-1.5-flash
+
+# テスト用の環境変数（.env.testのみ）
+EXPO_TEST_PUSH_TOKEN=your-expo-token
 ```
 
 ### ローカル開発環境の構築
 ```bash
+# 環境変数の設定
+export NODE_ENV=local  # local, test, prod
+
 # Firebaseエミュレータの起動
 firebase emulators:start --only functions,firestore
 
@@ -79,6 +93,14 @@ weather_data/
        ├── weatherForecasts: string (JSON)
        ├── generatedMessage: string
        └── createdAt: timestamp
+
+users/
+  └── userId/
+       ├── areaCode: string
+       ├── expoPushToken: string
+       ├── isPushNotificationEnabled: boolean
+       ├── createdAt: timestamp
+       └── updatedAt: timestamp
 ```
 
 ### スケジュール実行の仕様
@@ -87,74 +109,60 @@ weather_data/
 - タイムアウト: 9分
 - メモリ: 256MiB
 
-## API仕様
-
-### エンドポイント
-1. generateWeatherMessages (Scheduled)
-   - 毎朝6時に自動実行
-   - 全都道府県の処理を実行
-
-2. generateWeatherMessagesTest (HTTP)
-   - テスト用エンドポイント
-   - 4都道府県のサンプルデータを処理
-
-### レスポンス形式
-```json
-{
-  "status": "completed",
-  "timestamp": "2024-01-30T06:00:00.000Z",
-  "summary": {
-    "total": 47,
-    "success": 47,
-    "failed": 0
-  },
-  "results": {
-    "success": [
-      {
-        "prefecture": "東京都",
-        "code": "130000",
-        "message": "..."
-      }
-    ],
-    "failed": []
-  }
-}
-```
-
-### エラーレスポンス
-```json
-{
-  "status": "error",
-  "timestamp": "2024-01-30T06:00:00.000Z",
-  "error": "Error message"
-}
-```
-
 ## 開発ガイド
 
 ### プロジェクト構造
 ```
 functions/
 ├── src/
-│   ├── clients/      # 外部APIクライアント
-│   ├── config/       # 設定ファイル
-│   ├── core/         # コアロジック
-│   └── utils/        # ユーティリティ
-├── index.js          # エントリーポイント
+│   ├── clients/           # 外部APIクライアント
+│   │   ├── firebase.js   # Firebaseクライアント
+│   │   ├── gemini.js     # Gemini APIクライアント
+│   │   └── weather.js    # 気象庁APIクライアント
+│   ├── config/           # 設定ファイル
+│   │   ├── environment.js # 環境設定
+│   │   ├── firestore.js  # Firestore設定
+│   │   └── constants.js  # 定数定義
+│   ├── core/             # コアロジック
+│   │   ├── weather/      # 天気予報関連
+│   │   ├── notification/ # 通知関連
+│   │   └── batch/       # バッチ処理
+│   └── utils/           # ユーティリティ
+│       ├── date.js      # 日付操作
+│       └── logger.js    # ログ出力
+├── scripts/
+│   └── manual-test/     # 手動テストスクリプト
+├── index.js            # エントリーポイント
 └── package.json
 ```
 
 ### テスト方法
+
+#### 手動テストの実行
 ```bash
-# エミュレータでのテスト
+# テスト環境の設定
+cd functions
+export NODE_ENV=test
+export EXPO_TEST_PUSH_TOKEN=your-expo-token
+
+# 通知テストの実行
+./scripts/manual-test/run-notification-test.sh
+```
+
+#### エミュレータでのテスト
+```bash
+# エミュレータの起動
 firebase emulators:start --only functions,firestore
 
 # テスト関数の実行
-curl https://asia-northeast1-[PROJECT_ID].cloudfunctions.net/generateWeatherMessagesTest
+curl http://localhost:5001/[PROJECT_ID]/asia-northeast1/generateWeatherMessagesTest
 ```
 
 ### デプロイ手順
 ```bash
+# 環境変数の設定
+export NODE_ENV=prod
+
 # デプロイ内容の確認
 firebase deploy --only functions --dry-run
 
@@ -184,7 +192,7 @@ Cloud Monitoringで以下のアラートを設定：
 
 ### API制限
 - 気象庁API: レート制限あり
-- Gemini API: 10秒間隔での呼び出し制限
+- Gemini API: 20秒間隔での呼び出し制限
 
 ### リソース制限
 - 関数実行時間: 最大9分
@@ -200,6 +208,14 @@ Cloud Monitoringで以下のアラートを設定：
 MIT License (c) 2024
 
 ## 変更履歴
+
+### v1.1.0 (2024-02-01)
+- コードベースの大規模リファクタリング
+  - 機能別ディレクトリ構造の導入
+  - 環境設定の改善
+  - テストコードの整理
+  - エラーハンドリングの強化
+  - ログ出力の統一
 
 ### v1.0.0 (2024-01-30)
 - 初期リリース
