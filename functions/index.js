@@ -13,15 +13,15 @@ const { processBatch } = require("./src/core/batch/batch-processor");
 const { processWeatherData } = require("./src/core/weather/weather-mother");
 const { PREFECTURE_CODES } = require("./src/config/prefectures");
 const logger = require("./src/utils/logger");
-const db = require("./src/utils/firestore");
-const { COLLECTION_NAME } = require("./src/config/firestore");
+const { getDb } = require("./src/utils/firestore");
+const { COLLECTIONS } = require("./src/config/firestore");
 const { sendNotificationsToAllUsers } = require("./src/core/notification/sendNotifications");
 const {
   testBasicNotification,
   testMissingWeatherData,
   testMultipleUsers,
   testRealWeatherNotification,
-} = require("./src/core/testNotifications");
+} = require("./src/core/notification/testNotifications");
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -166,7 +166,7 @@ exports.migrateFieldNames = onRequest(
       logger.info("==== フィールド名移行処理開始 ====");
       const startTime = Date.now();
 
-      const snapshot = await db.collection(COLLECTION_NAME).get();
+      const snapshot = await getDb().collection(COLLECTIONS.weatherData).get();
       let migratedCount = 0;
       let skippedCount = 0;
       let errorCount = 0;
