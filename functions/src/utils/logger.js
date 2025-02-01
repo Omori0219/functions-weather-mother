@@ -16,19 +16,52 @@ const LogLevel = {
 };
 
 /**
+ * 基本的なメタデータを生成
+ * @returns {Object} メタデータ
+ */
+function generateBaseMetadata() {
+  return {
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+    isTestEnvironment: isTestEnvironment,
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+  };
+}
+
+/**
+ * エラーオブジェクトを安全にシリアライズ
+ * @param {Error} error - エラーオブジェクト
+ * @returns {Object} シリアライズされたエラー情報
+ */
+function serializeError(error) {
+  if (!error) return null;
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+    code: error.code,
+  };
+}
+
+/**
  * ログ出力
  * @param {string} level - ログレベル
  * @param {string} message - ログメッセージ
  * @param {Object} [data] - 追加データ
  */
 function log(level, message, data = {}) {
-  // テスト環境では詳細なログを出力
+  const baseMetadata = generateBaseMetadata();
+
+  // エラーオブジェクトの特別処理
+  if (data.error) {
+    data.error = serializeError(data.error);
+  }
+
   const logData = {
-    timestamp: new Date().toISOString(),
+    ...baseMetadata,
     level,
     message,
     ...data,
-    environment: process.env.NODE_ENV || "development",
   };
 
   // テスト環境では色付きで出力
@@ -42,9 +75,10 @@ function log(level, message, data = {}) {
     const reset = "\x1b[0m";
     console.log(`${colors[level]}[${level}]${reset} ${message}`);
     if (Object.keys(data).length > 0) {
-      console.log(data);
+      console.log(JSON.stringify(data, null, 2));
     }
   } else {
+    // 本番環境ではJSONとして出力
     console.log(JSON.stringify(logData));
   }
 }

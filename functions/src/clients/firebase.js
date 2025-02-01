@@ -32,20 +32,67 @@ async function saveWeatherData({
   generatedMessage,
   createdat,
 }) {
-  try {
-    const docRef = db.collection(COLLECTIONS.WEATHER_DATA).doc(documentId);
+  const startTime = Date.now();
+  const collection = COLLECTIONS.WEATHER_DATA;
 
-    await docRef.set({
+  info("天気予報データの保存を開始", {
+    operation: "saveWeatherData",
+    collection,
+    documentId,
+    areaCode,
+    hasWeatherForecasts: !!weatherForecasts,
+    hasGeneratedMessage: !!generatedMessage,
+  });
+
+  try {
+    const docRef = db.collection(collection).doc(documentId);
+    const data = {
       areaCode,
       weatherForecasts,
       generatedMessage,
       createdAt: admin.firestore.Timestamp.fromDate(createdat),
+    };
+
+    await docRef.set(data);
+
+    // 書き込み後の検証
+    const writtenDoc = await docRef.get();
+    if (!writtenDoc.exists) {
+      throw new Error("Document not found after write");
+    }
+
+    const endTime = Date.now();
+    info("天気予報データを保存しました", {
+      operation: "saveWeatherData",
+      status: "success",
+      collection,
+      documentId,
+      areaCode,
+      processingTimeMs: endTime - startTime,
+      data: {
+        hasWeatherForecasts: !!weatherForecasts,
+        hasGeneratedMessage: !!generatedMessage,
+        createdAt: createdat.toISOString(),
+      },
     });
 
-    info("天気予報データを保存しました", { documentId });
     return true;
   } catch (err) {
-    error("天気予報データの保存に失敗", { documentId, error: err });
+    const endTime = Date.now();
+    error("天気予報データの保存に失敗", {
+      operation: "saveWeatherData",
+      status: "error",
+      collection,
+      documentId,
+      areaCode,
+      processingTimeMs: endTime - startTime,
+      error: err,
+      data: {
+        hasWeatherForecasts: !!weatherForecasts,
+        hasGeneratedMessage: !!generatedMessage,
+        createdAt: createdat.toISOString(),
+      },
+    });
     throw err;
   }
 }
