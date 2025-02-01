@@ -10,12 +10,12 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest } = require("firebase-functions/v2/https");
 const { processBatch } = require("./src/core/batch/batch-processor");
-const { processWeatherData } = require("./src/core/weather-mother");
+const { processWeatherData } = require("./src/core/weather/weather-mother");
 const { PREFECTURE_CODES } = require("./src/config/prefectures");
 const logger = require("./src/utils/logger");
 const db = require("./src/utils/firestore");
 const { COLLECTION_NAME } = require("./src/config/firestore");
-const { sendNotificationsToAllUsers } = require("./src/core/sendNotifications");
+const { sendNotificationsToAllUsers } = require("./src/core/notification/sendNotifications");
 const {
   testBasicNotification,
   testMissingWeatherData,
