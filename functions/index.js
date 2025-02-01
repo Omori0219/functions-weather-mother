@@ -16,12 +16,14 @@ const logger = require("./src/utils/logger");
 const { getDb } = require("./src/utils/firestore");
 const { COLLECTIONS } = require("./src/config/firestore");
 const { sendNotificationsToAllUsers } = require("./src/core/notification/sendNotifications");
-const {
-  testBasicNotification,
-  testMissingWeatherData,
-  testMultipleUsers,
-  testRealWeatherNotification,
-} = require("./src/core/notification/testNotifications");
+
+// テスト関連のインポートは一時的にコメントアウト
+// const {
+//   testBasicNotification,
+//   testMissingWeatherData,
+//   testMultipleUsers,
+//   testRealWeatherNotification,
+// } = require("./src/core/notification/testNotifications");
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
