@@ -7,13 +7,7 @@ const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 const { COLLECTIONS } = require("../config/firestore");
 const { info, error } = require("../utils/logger");
-
-// Firebase Admin の初期化（ADCを使用）
-admin.initializeApp({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-});
-
-const db = getFirestore();
+const { getDb } = require("../utils/firestore");
 
 /**
  * 天気予報データを保存
@@ -45,6 +39,7 @@ async function saveWeatherData({
   });
 
   try {
+    const db = getDb();
     const docRef = db.collection(collection).doc(documentId);
     const data = {
       areaCode,
