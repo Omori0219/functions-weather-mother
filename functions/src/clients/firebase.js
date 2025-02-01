@@ -1,7 +1,12 @@
+/**
+ * Firebaseクライアント
+ * @file firebase.js
+ */
+
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
-const { COLLECTION_NAME } = require("../config/constants");
-const logger = require("../utils/logger");
+const { COLLECTIONS } = require("../config/firestore");
+const { info, error } = require("../utils/logger");
 
 // Firebase Admin の初期化（ADCを使用）
 admin.initializeApp({
@@ -10,6 +15,16 @@ admin.initializeApp({
 
 const db = getFirestore();
 
+/**
+ * 天気予報データを保存
+ * @param {Object} params - 保存するデータのパラメータ
+ * @param {string} params.documentId - ドキュメントID
+ * @param {string} params.areaCode - 地域コード
+ * @param {Object} params.weatherForecasts - 天気予報データ
+ * @param {string} params.generatedMessage - 生成されたメッセージ
+ * @param {Date} params.createdat - 作成日時
+ * @returns {Promise<boolean>} 保存成功時はtrue
+ */
 async function saveWeatherData({
   documentId,
   areaCode,
@@ -18,7 +33,7 @@ async function saveWeatherData({
   createdat,
 }) {
   try {
-    const docRef = db.collection(COLLECTION_NAME).doc(documentId);
+    const docRef = db.collection(COLLECTIONS.WEATHER_DATA).doc(documentId);
 
     await docRef.set({
       areaCode,
@@ -27,11 +42,11 @@ async function saveWeatherData({
       createdAt: admin.firestore.Timestamp.fromDate(createdat),
     });
 
-    logger.info("Document successfully written!");
+    info("天気予報データを保存しました", { documentId });
     return true;
-  } catch (error) {
-    logger.error("Firestore write error", error);
-    throw error;
+  } catch (err) {
+    error("天気予報データの保存に失敗", { documentId, error: err });
+    throw err;
   }
 }
 

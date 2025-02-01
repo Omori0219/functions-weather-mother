@@ -1,71 +1,85 @@
-const { VertexAI } = require("@google-cloud/vertexai");
-const { GoogleAuth } = require("google-auth-library");
-const logger = require("../utils/logger");
+/**
+ * Google Gemini APIクライアント
+ * @file gemini.js
+ */
 
-// Vertex AI の設定
-const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+const { VertexAI } = require("@google-cloud/vertexai");
+const { info, error, debug } = require("../utils/logger");
+
+/**
+ * Vertex AI の設定
+ */
 const VERTEX_AI_CONFIG = {
-  LOCATION: "asia-northeast1",
-  MODEL: "gemini-1.5-flash",
+  LOCATION: process.env.VERTEX_AI_LOCATION || "asia-northeast1",
+  MODEL: process.env.VERTEX_AI_MODEL || "gemini-1.5-flash",
   // リトライ設定
   INITIAL_RETRY_DELAY: 5000, // 5秒
   MAX_RETRY_DELAY: 60000, // 60秒
   MAX_RETRIES: 5, // 最大リトライ回数
+  MIN_REQUEST_INTERVAL: 20000, // 20秒
 };
-
-// スロットリングとリトライの設定
-const INITIAL_RETRY_DELAY = VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY;
-const MAX_RETRY_DELAY = VERTEX_AI_CONFIG.MAX_RETRY_DELAY;
-const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
 
 // リクエスト間隔の制御用
 let lastRequestTime = 0;
-const minRequestInterval = 20000; // 20秒に変更
 
-// スリープ関数
+/**
+ * 指定時間スリープ
+ * @param {number} ms - スリープ時間（ミリ秒）
+ * @returns {Promise<void>}
+ */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// リクエストの間隔を制御する関数
+/**
+ * リクエストの間隔を制御
+ * @returns {Promise<void>}
+ */
 const throttleRequest = async () => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
 
-  if (timeSinceLastRequest < minRequestInterval) {
-    const waitTime = minRequestInterval - timeSinceLastRequest;
-    logger.info(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
+  if (timeSinceLastRequest < VERTEX_AI_CONFIG.MIN_REQUEST_INTERVAL) {
+    const waitTime = VERTEX_AI_CONFIG.MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    debug(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
     await sleep(waitTime);
   }
 
   lastRequestTime = Date.now();
 };
 
-// リトライ処理を行う関数
+/**
+ * リトライ処理を実行
+ * @param {Function} operation - 実行する非同期操作
+ * @returns {Promise<any>} 操作の結果
+ */
 const withRetry = async (operation) => {
   let retryCount = 0;
-  let delay = INITIAL_RETRY_DELAY;
+  let delay = VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY;
 
   while (true) {
     try {
       await throttleRequest();
       return await operation();
-    } catch (error) {
-      if (error?.code === 429 && retryCount < MAX_RETRIES) {
+    } catch (err) {
+      if (err?.code === 429 && retryCount < VERTEX_AI_CONFIG.MAX_RETRIES) {
         retryCount++;
-        logger.info(
-          `レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
-        );
+        info(`レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`);
         await sleep(delay);
-        delay = Math.min(delay * 2, MAX_RETRY_DELAY);
+        delay = Math.min(delay * 2, VERTEX_AI_CONFIG.MAX_RETRY_DELAY);
         continue;
       }
-      throw error;
+      throw err;
     }
   }
 };
 
+/**
+ * Gemini APIからレスポンスを取得
+ * @param {string} prompt - 入力プロンプト
+ * @returns {Promise<string>} 生成されたメッセージ
+ */
 async function getGeminiResponse(prompt) {
   const vertexAI = new VertexAI({
-    project: projectId,
+    project: process.env.GOOGLE_CLOUD_PROJECT_ID,
     location: VERTEX_AI_CONFIG.LOCATION,
   });
 
@@ -82,6 +96,8 @@ async function getGeminiResponse(prompt) {
   };
 
   try {
+    info("Gemini APIリクエストを開始", { prompt: prompt.substring(0, 100) + "..." });
+
     const request = {
       contents: [
         {
@@ -103,16 +119,16 @@ async function getGeminiResponse(prompt) {
     const result = await response.response;
     const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
 
+    info("Gemini APIレスポンスを受信");
     return jsonResponse.mother_message;
-  } catch (error) {
-    logger.error("Gemini API error", error);
-    if (error instanceof SyntaxError) {
-      logger.error(
-        "JSON parsing failed. Raw response:",
-        result?.candidates[0]?.content?.parts[0]?.text
-      );
+  } catch (err) {
+    error("Gemini APIエラー", { error: err });
+    if (err instanceof SyntaxError) {
+      error("JSONパースに失敗", {
+        response: result?.candidates[0]?.content?.parts[0]?.text,
+      });
     }
-    throw error;
+    throw err;
   }
 }
 
