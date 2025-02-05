@@ -1,84 +1,66 @@
 /**
- * Expo通知クライアント
- * プッシュ通知の送信機能を提供します
+ * Expoクライアント
+ * Expo Push Notification Serviceとの通信を担当します
  */
 
 const { Expo } = require("expo-server-sdk");
 const logger = require("../utils/logger");
 
-// Expoクライアントのインスタンスを作成
 const expo = new Expo();
 
 /**
- * プッシュ通知を送信する
- * @param {string} expoPushToken - Expoプッシュ通知トークン
- * @param {string} message - 送信するメッセージ
+ * プッシュ通知を送信
+ * @param {string} token - プッシュ通知トークン
+ * @param {Object} notification - 通知内容
+ * @param {string} notification.title - 通知タイトル
+ * @param {string} notification.body - 通知本文
+ * @param {Object} [notification.data] - 追加データ
  * @returns {Promise<void>}
  */
-async function sendPushNotification(expoPushToken, message) {
-  // トークンが有効なExpoプッシュトークンかチェック
-  if (!Expo.isExpoPushToken(expoPushToken)) {
-    logger.error(`プッシュトークンが無効です: ${expoPushToken}`);
-    return;
-  }
-
-  // 通知メッセージを作成
-  const messages = [
-    {
-      to: expoPushToken,
-      sound: "default",
-      title: "お天気おかん",
-      body: message,
-      data: { withSome: "data" },
-    },
-  ];
-
+async function sendPushNotification(token, { title, body, data = {} }) {
   try {
-    // メッセージをチャンクに分割して送信
-    const chunks = expo.chunkPushNotifications(messages);
-    const tickets = [];
+    // トークンの形式を検証
+    if (!Expo.isExpoPushToken(token)) {
+      logger.error(`無効なExpoプッシュトークンです: ${token}`);
+      throw new Error("無効なプッシュトークンです");
+    }
 
-    // 各チャンクを送信
+    // 通知メッセージを構築
+    const message = {
+      to: token,
+      sound: "default",
+      title,
+      body,
+      data,
+      priority: "high",
+    };
+
+    // 通知を送信
+    logger.info(`プッシュ通知を送信中... (トークン: ${token})`);
+    const chunks = expo.chunkPushNotifications([message]);
+
+    const tickets = [];
     for (const chunk of chunks) {
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
         tickets.push(...ticketChunk);
-        logger.info("プッシュ通知を送信しました:", ticketChunk);
       } catch (error) {
-        logger.error("プッシュ通知の送信に失敗しました:", error);
+        logger.error("チャンクの送信に失敗しました", error);
+        throw error;
       }
     }
 
-    // レシートを取得
-    const receiptIds = [];
+    // 送信結果を確認
     for (const ticket of tickets) {
-      if (ticket.id) {
-        receiptIds.push(ticket.id);
+      if (ticket.status === "error") {
+        logger.error("通知の送信に失敗しました", ticket.details);
+        throw new Error(ticket.message);
       }
     }
 
-    const receiptIdChunks = expo.chunkPushNotificationReceiptIds(receiptIds);
-
-    // レシートを確認
-    for (const chunk of receiptIdChunks) {
-      try {
-        const receipts = await expo.getPushNotificationReceiptsAsync(chunk);
-
-        for (const receiptId in receipts) {
-          const { status, message: receiptMessage, details } = receipts[receiptId];
-
-          if (status === "ok") {
-            logger.info("プッシュ通知が正常に配信されました");
-          } else if (status === "error") {
-            logger.error(`プッシュ通知でエラーが発生しました:`, receiptMessage, details);
-          }
-        }
-      } catch (error) {
-        logger.error("レシートの取得に失敗しました:", error);
-      }
-    }
+    logger.info("プッシュ通知の送信が完了しました");
   } catch (error) {
-    logger.error("プッシュ通知処理でエラーが発生しました:", error);
+    logger.error("プッシュ通知の送信に失敗しました", error);
     throw error;
   }
 }

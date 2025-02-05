@@ -1,126 +1,50 @@
 /**
- * Gemini APIクライアント
- * AIを使用したメッセージ生成機能を提供します
+ * Geminiクライアント
+ * Google Gemini APIを使用してテキスト生成を行います
  */
 
-const { VertexAI } = require("@google-cloud/vertexai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GEMINI_API_KEY } = require("../config/env");
 const logger = require("../utils/logger");
 
-// Vertex AI の設定
-const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
-const VERTEX_AI_CONFIG = {
-  LOCATION: "asia-northeast1",
-  MODEL: "gemini-1.5-flash",
-  // リトライ設定
-  INITIAL_RETRY_DELAY: 5000, // 5秒
-  MAX_RETRY_DELAY: 60000, // 60秒
-  MAX_RETRIES: 5, // 最大リトライ回数
-};
-
-// スロットリングとリトライの設定
-const INITIAL_RETRY_DELAY = VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY;
-const MAX_RETRY_DELAY = VERTEX_AI_CONFIG.MAX_RETRY_DELAY;
-const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
-
-// リクエスト間隔の制御用
-let lastRequestTime = 0;
-const minRequestInterval = 20000; // 20秒
-
-// スリープ関数
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// リクエストの間隔を制御する関数
-const throttleRequest = async () => {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-
-  if (timeSinceLastRequest < minRequestInterval) {
-    const waitTime = minRequestInterval - timeSinceLastRequest;
-    logger.info(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
-    await sleep(waitTime);
-  }
-
-  lastRequestTime = Date.now();
-};
-
-// リトライ処理を行う関数
-const withRetry = async (operation) => {
-  let retryCount = 0;
-  let delay = INITIAL_RETRY_DELAY;
-
-  while (true) {
-    try {
-      await throttleRequest();
-      return await operation();
-    } catch (error) {
-      if (error?.code === 429 && retryCount < MAX_RETRIES) {
-        retryCount++;
-        logger.info(
-          `レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
-        );
-        await sleep(delay);
-        delay = Math.min(delay * 2, MAX_RETRY_DELAY);
-        continue;
-      }
-      throw error;
-    }
-  }
-};
+// Gemini APIの設定
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 /**
- * Gemini APIを使用してメッセージを生成する
+ * Geminiモデルを使用してテキストを生成
  * @param {string} prompt - 生成のためのプロンプト
- * @returns {Promise<string>} 生成されたメッセージ
+ * @returns {Promise<string>} 生成されたテキスト
  */
 async function getGeminiResponse(prompt) {
-  const vertexAI = new VertexAI({
-    project: projectId,
-    location: VERTEX_AI_CONFIG.LOCATION,
-  });
-
-  const generativeModel = vertexAI.preview.getGenerativeModel({
-    model: VERTEX_AI_CONFIG.MODEL,
-  });
-
-  const response_schema = {
-    type: "object",
-    properties: {
-      mother_message: { type: "string" },
-    },
-    required: ["mother_message"],
-  };
-
   try {
-    const request = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      generation_config: {
-        responseMimeType: "application/json",
-        responseSchema: response_schema,
-      },
+    logger.info("Gemini APIでテキストを生成中...");
+
+    // 生成パラメータの設定
+    const generationConfig = {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 1024,
     };
 
-    // リトライ機能を使用してAPIリクエストを実行
-    const response = await withRetry(async () => {
-      return await generativeModel.generateContent(request);
+    // テキストを生成
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig,
     });
 
-    const result = await response.response;
-    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
-
-    return jsonResponse.mother_message;
-  } catch (error) {
-    logger.error("Gemini API エラー", error);
-    if (error instanceof SyntaxError) {
-      logger.error(
-        "JSONパースに失敗しました。生のレスポンス:",
-        result?.candidates[0]?.content?.parts[0]?.text
-      );
+    // レスポンスを検証
+    if (!result.response || !result.response.text()) {
+      logger.error("Gemini APIから無効なレスポンスを受信しました");
+      throw new Error("テキスト生成に失敗しました");
     }
+
+    const generatedText = result.response.text().trim();
+    logger.info("テキストの生成が完了しました");
+    return generatedText;
+  } catch (error) {
+    logger.error("Gemini APIでエラーが発生しました", error);
     throw error;
   }
 }
