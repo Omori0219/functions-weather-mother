@@ -57,21 +57,21 @@ src/
 ├── api/                    # APIエンドポイント
 │   ├── weather.js
 │   ├── notifications.js
-│   └── index.js
+│   └── index.js           # APIエンドポイントのエクスポート管理
 ├── schedulers/            # スケジュールされたジョブ
 │   ├── weather.js
 │   ├── notifications.js
-│   └── index.js
+│   └── index.js           # スケジューラのエクスポート管理
 ├── domain/               # ドメインロジック
 │   ├── weather/
 │   │   ├── weather-api-client.js
 │   │   ├── mother-message-creator.js
 │   │   ├── weather-storage.js
-│   │   └── index.js
+│   │   └── index.js       # 天気予報ドメインのエクスポート管理
 │   └── notifications/
 │       ├── notification-sender.js
 │       ├── user-preferences.js
-│       └── index.js
+│       └── index.js       # 通知ドメインのエクスポート管理
 ├── clients/             # 外部APIクライアント
 │   ├── jma.js
 │   ├── gemini.js
@@ -81,7 +81,86 @@ src/
     ├── date.js
     ├── logger.js
     └── id-generator.js
+
+index.js                # アプリケーションのエントリーポイント
 ```
+
+### 各index.jsの役割
+
+1. **src/index.js** (アプリケーションのエントリーポイント)
+   ```javascript
+   const admin = require("firebase-admin");
+   const { initializeApp } = require("firebase-admin/app");
+
+   // Firebase Adminの初期化（アプリケーション全体で1回のみ）
+   if (!admin.apps.length) {
+     initializeApp();
+   }
+
+   // APIエンドポイントのエクスポート
+   exports.api = require("./api");
+
+   // スケジューラのエクスポート
+   exports.schedulers = require("./schedulers");
+   ```
+
+2. **src/api/index.js** (APIエンドポイントの集約)
+   ```javascript
+   const { getWeatherForecast } = require("./weather");
+   const {
+     getNotificationSettings,
+     updateNotificationSettings,
+     sendTestNotification,
+   } = require("./notifications");
+
+   module.exports = {
+     getWeatherForecast,
+     getNotificationSettings,
+     updateNotificationSettings,
+     sendTestNotification,
+   };
+   ```
+
+3. **src/schedulers/index.js** (スケジューラの集約)
+   ```javascript
+   const { fetchDailyWeatherForecast } = require("./weather");
+   const { sendDailyWeatherNotifications } = require("./notifications");
+
+   module.exports = {
+     fetchDailyWeatherForecast,
+     sendDailyWeatherNotifications,
+   };
+   ```
+
+4. **src/domain/weather/index.js** (天気予報ドメインの集約)
+   ```javascript
+   const { processWeatherData } = require("./weather-api-client");
+   const { generateMotherMessage } = require("./mother-message-creator");
+   const { storeWeatherForecast } = require("./weather-storage");
+
+   module.exports = {
+     processWeatherData,
+     generateMotherMessage,
+     storeWeatherForecast,
+   };
+   ```
+
+5. **src/domain/notifications/index.js** (通知ドメインの集約)
+   ```javascript
+   const { sendNotification } = require("./notification-sender");
+   const { getUserPreferences } = require("./user-preferences");
+
+   module.exports = {
+     sendNotification,
+     getUserPreferences,
+   };
+   ```
+
+これらのindex.jsファイルは以下の重要な役割を果たします：
+1. モジュールの依存関係を整理し、外部からのアクセスポイントを一元管理
+2. 初期化処理の集中管理（特にsrc/index.js）
+3. Cloud Functionsへのエンドポイント提供（api, schedulers）
+4. 各ドメインの公開インターフェースの定義
 
 ## リファクタリング実施手順
 
