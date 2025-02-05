@@ -25,39 +25,39 @@
 - [x] 既存の機能を損なっていない
 
 ## Phase 3: 天気予報ドメインの実装
-- [ ] `domain/weather/weather-api-client.js`の実装
-- [ ] `domain/weather/mother-message-creator.js`の実装
-- [ ] `domain/weather/weather-storage.js`の実装
-- [ ] `domain/weather/index.js`での統合
+- [x] `domain/weather/weather-api-client.js`の実装
+- [x] `domain/weather/mother-message-creator.js`の実装
+- [x] `domain/weather/weather-storage.js`の実装
+- [x] `domain/weather/index.js`での統合
 
 ### 確認項目
-- [ ] 各機能が独立して動作する
-- [ ] ドメインロジックが適切に分離されている
-- [ ] エラーハンドリングが実装されている
-- [ ] 既存の機能を損なっていない
+- [x] 各機能が独立して動作する
+- [x] ドメインロジックが適切に分離されている
+- [x] エラーハンドリングが実装されている
+- [x] 既存の機能を損なっていない
 
 ## Phase 4: 通知ドメインの実装
-- [ ] `domain/notifications/notification-sender.js`の実装
-- [ ] `domain/notifications/user-preferences.js`の実装
-- [ ] `domain/notifications/index.js`での統合
+- [x] `domain/notifications/notification-sender.js`の実装
+- [x] `domain/notifications/user-preferences.js`の実装
+- [x] `domain/notifications/index.js`での統合
 
 ### 確認項目
-- [ ] 各機能が独立して動作する
-- [ ] ドメインロジックが適切に分離されている
-- [ ] エラーハンドリングが実装されている
-- [ ] 既存の機能を損なっていない
+- [x] 各機能が独立して動作する
+- [x] ドメインロジックが適切に分離されている
+- [x] エラーハンドリングが実装されている
+- [x] 既存の機能を損なっていない
 
 ## Phase 5: API層とスケジュール層の実装
-- [ ] `api/weather.js`の実装
-- [ ] `api/notifications.js`の実装
-- [ ] `schedules/weather.js`の実装
-- [ ] `schedules/notifications.js`の実装
+- [x] `api/weather.js`の実装
+- [x] `api/notifications.js`の実装
+- [x] `schedules/weather.js`の実装
+- [x] `schedules/notifications.js`の実装
 
 ### 確認項目
-- [ ] 各APIエンドポイントが正常に動作する
-- [ ] スケジュール関数が正常に動作する
-- [ ] エラーハンドリングが実装されている
-- [ ] 既存の機能を損なっていない
+- [x] 各APIエンドポイントが正常に動作する
+- [x] スケジュール関数が正常に動作する
+- [x] エラーハンドリングが実装されている
+- [x] 既存の機能を損なっていない
 
 ## Phase 6: テストスクリプトの作成
 - [ ] `scripts/test/weather/test-tokyo.sh`の作成

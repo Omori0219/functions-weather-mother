@@ -8,7 +8,7 @@ const {
   getWeatherData,
   getWeatherDataByDate,
 } = require("../../clients/firestore");
-const { generateDocumentId } = require("../../utils/date");
+const { generateWeatherDocumentId } = require("../../utils/id-generator");
 const logger = require("../../utils/logger");
 
 /**
@@ -24,7 +24,7 @@ async function storeWeatherForecast({ areaCode, weatherData, message }) {
     logger.info("天気予報データを保存中...");
 
     // ドキュメントIDを生成
-    const documentId = generateDocumentId(areaCode);
+    const documentId = generateWeatherDocumentId(areaCode);
 
     // データを保存
     const result = await saveWeatherData({
@@ -54,7 +54,7 @@ async function retrieveWeatherForecast(areaCode, date = new Date()) {
     logger.info(`天気予報データを取得中... (地域コード: ${areaCode}, 日付: ${date.toISOString()})`);
 
     // ドキュメントIDを生成
-    const documentId = generateDocumentId(areaCode, date);
+    const documentId = generateWeatherDocumentId(areaCode, date);
 
     // データを取得
     const data = await getWeatherData(documentId);

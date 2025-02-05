@@ -5,6 +5,7 @@
 
 const admin = require("firebase-admin");
 const logger = require("../utils/logger");
+const { generateWeatherDocumentId } = require("../utils/id-generator");
 
 const db = admin.firestore();
 
@@ -73,7 +74,7 @@ async function getWeatherData(documentId) {
 async function getWeatherDataByDate(areaCode, date) {
   try {
     logger.info(`天気予報データを取得中... (地域コード: ${areaCode}, 日付: ${date})`);
-    const documentId = generateDocumentId(areaCode, date);
+    const documentId = generateWeatherDocumentId(areaCode, date);
     return await getWeatherData(documentId);
   } catch (error) {
     logger.error("天気予報データの取得に失敗しました", error);

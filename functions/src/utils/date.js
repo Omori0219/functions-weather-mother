@@ -37,17 +37,6 @@ function parseStringToDate(dateString) {
 }
 
 /**
- * ドキュメントIDを生成
- * @param {string} areaCode - 地域コード
- * @param {Date} [date=new Date()] - 対象日付（省略時は当日）
- * @returns {string} ドキュメントID
- */
-function generateDocumentId(areaCode, date = new Date()) {
-  const formattedDate = formatDateToString(date);
-  return `${formattedDate}-${areaCode}`;
-}
-
-/**
  * 日付が有効かどうかをチェック
  * @param {string|Date} date - チェックする日付
  * @returns {boolean} 日付が有効な場合はtrue
@@ -72,6 +61,5 @@ function isValidDate(date) {
 module.exports = {
   formatDateToString,
   parseStringToDate,
-  generateDocumentId,
   isValidDate,
 };
