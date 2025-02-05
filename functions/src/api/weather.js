@@ -1,78 +1,73 @@
 /**
  * 天気予報API
- * テスト用のエンドポイントを提供します
+ * 天気予報の取得と更新のエンドポイントを提供します
  */
 
 const { onRequest } = require("firebase-functions/v2/https");
-const { processWeatherData } = require("../domain/weather");
-const { PREFECTURE_CODES } = require("../config/prefectures");
+const { processWeatherData, getStoredWeatherData } = require("../domain/weather");
 const logger = require("../utils/logger");
 
 /**
- * 天気予報メッセージ生成のテスト用エンドポイント
+ * 天気予報を取得
  */
-exports.generateWeatherMessagesTest = onRequest(
+exports.getWeatherForecast = onRequest(
   {
-    timeoutSeconds: 540, // タイムアウト: 9分
+    timeoutSeconds: 30,
     memory: "256MiB",
     region: "asia-northeast1",
   },
   async (req, res) => {
-    logger.info("テスト用の天気予報メッセージ生成処理を開始します...");
-    logger.info("==== テストバッチ処理開始 ====");
-
     try {
-      // テスト用の都道府県（北海道、東京、大阪、沖縄）
-      const testPrefectures = PREFECTURE_CODES.filter((p) =>
-        ["016000", "130000", "270000", "471000"].includes(p.code)
-      );
+      const { areaCode, date } = req.query;
 
-      const results = {
-        success: [],
-        failed: [],
-      };
-
-      // 各都道府県を処理
-      for (const prefecture of testPrefectures) {
-        try {
-          const result = await processWeatherData(prefecture.code);
-          results.success.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            message: result.message,
-          });
-          logger.info(`${prefecture.name}の処理が完了しました！`);
-        } catch (error) {
-          results.failed.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            error: error.message,
-          });
-          logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
-        }
+      // パラメータのバリデーション
+      if (!areaCode) {
+        res.status(400).json({
+          status: "error",
+          error: "地域コードが必要です",
+        });
+        return;
       }
 
-      const executionResult = {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        summary: {
-          total: testPrefectures.length,
-          success: results.success.length,
-          failed: results.failed.length,
-        },
-        results,
-      };
+      // 日付が指定されていない場合は今日の日付を使用
+      const targetDate = date || new Date().toISOString().split("T")[0].replace(/-/g, "");
 
-      logger.info("実行結果", executionResult);
-      res.json(executionResult);
+      logger.info(`天気予報を取得します: ${areaCode}, ${targetDate}`);
+
+      // 天気予報を取得
+      const weatherData = await getStoredWeatherData(areaCode, targetDate);
+
+      if (!weatherData) {
+        // 天気予報が見つからない場合は新規取得
+        logger.info("天気予報が見つからないため、新規取得を試みます");
+        await processWeatherData(areaCode);
+        const newWeatherData = await getStoredWeatherData(areaCode, targetDate);
+
+        if (!newWeatherData) {
+          res.status(404).json({
+            status: "error",
+            error: "天気予報が見つかりません",
+          });
+          return;
+        }
+
+        res.json({
+          status: "success",
+          data: newWeatherData,
+        });
+        return;
+      }
+
+      res.json({
+        status: "success",
+        data: weatherData,
+      });
     } catch (error) {
-      const errorResult = {
+      logger.error("天気予報の取得でエラーが発生しました:", error);
+      res.status(500).json({
         status: "error",
-        timestamp: new Date().toISOString(),
-        error: error.message,
-      };
-      logger.error("テスト実行中にエラーが発生しました", errorResult);
-      res.status(500).json(errorResult);
+        error: "天気予報の取得に失敗しました",
+      });
     }
   }
 );
