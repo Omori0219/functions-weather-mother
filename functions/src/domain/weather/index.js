@@ -9,7 +9,7 @@ const { storeWeatherForecast, retrieveWeatherForecast } = require("./weather-sto
 const logger = require("../../utils/logger");
 
 /**
- * 天気予報データを処理する
+ * 天気予報データを処理
  * @param {string} areaCode - 地域コード
  * @returns {Promise<Object>} 処理結果
  */
@@ -42,7 +42,7 @@ async function processWeatherData(areaCode) {
 }
 
 /**
- * 保存済みの天気予報データを取得する
+ * 保存済みの天気予報データを取得
  * @param {string} areaCode - 地域コード
  * @param {Date} [date] - 対象日付（省略時は当日）
  * @returns {Promise<Object|null>} 天気予報データ

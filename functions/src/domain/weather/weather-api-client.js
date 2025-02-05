@@ -7,7 +7,7 @@ const { getWeatherForecast } = require("../../clients/jma");
 const logger = require("../../utils/logger");
 
 /**
- * 天気予報データを取得する
+ * 天気予報データを取得して整形
  * @param {string} areaCode - 地域コード
  * @returns {Promise<Object>} 整形された天気予報データ
  */
@@ -34,6 +34,12 @@ async function fetchWeatherData(areaCode) {
         probability: pop,
       })),
     };
+
+    // データの妥当性チェック
+    if (!weatherData.areaName || !weatherData.forecasts?.length) {
+      logger.error("無効な天気予報データを受信しました", weatherData);
+      throw new Error("天気予報データの形式が不正です");
+    }
 
     logger.info("天気予報データの取得が完了しました");
     return weatherData;
