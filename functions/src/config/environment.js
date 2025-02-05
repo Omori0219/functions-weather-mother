@@ -1,6 +1,5 @@
 /**
- * 環境設定の定義
- * @file environment.js
+ * 環境設定
  */
 
 const ENV = {
@@ -11,14 +10,10 @@ const ENV = {
 
 const currentEnv = process.env.NODE_ENV || ENV.LOCAL;
 
-const isTestEnvironment = currentEnv === ENV.TEST;
-const isLocalEnvironment = currentEnv === ENV.LOCAL;
-const isProductionEnvironment = currentEnv === ENV.PROD;
-
 module.exports = {
   ENV,
   currentEnv,
-  isTestEnvironment,
-  isLocalEnvironment,
-  isProductionEnvironment,
+  isTest: currentEnv === ENV.TEST,
+  isLocal: currentEnv === ENV.LOCAL,
+  isProd: currentEnv === ENV.PROD,
 };

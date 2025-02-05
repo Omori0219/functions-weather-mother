@@ -3,13 +3,15 @@
  * Google Gemini APIを使用してテキスト生成を行います
  */
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { GEMINI_API_KEY } = require("../config/env");
+const { VertexAI } = require("@google-cloud/vertexai");
 const logger = require("../utils/logger");
 
-// Gemini APIの設定
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+// Vertex AI の設定
+const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+const VERTEX_AI_CONFIG = {
+  LOCATION: "asia-northeast1",
+  MODEL: "gemini-1.5-flash",
+};
 
 /**
  * Geminiモデルを使用してテキストを生成
@@ -20,29 +22,42 @@ async function getGeminiResponse(prompt) {
   try {
     logger.info("Gemini APIでテキストを生成中...");
 
-    // 生成パラメータの設定
-    const generationConfig = {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 1024,
-    };
-
-    // テキストを生成
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig,
+    const vertexAI = new VertexAI({
+      project: projectId,
+      location: VERTEX_AI_CONFIG.LOCATION,
     });
 
-    // レスポンスを検証
-    if (!result.response || !result.response.text()) {
-      logger.error("Gemini APIから無効なレスポンスを受信しました");
-      throw new Error("テキスト生成に失敗しました");
-    }
+    const generativeModel = vertexAI.preview.getGenerativeModel({
+      model: VERTEX_AI_CONFIG.MODEL,
+    });
 
-    const generatedText = result.response.text().trim();
+    const response_schema = {
+      type: "object",
+      properties: {
+        mother_message: { type: "string" },
+      },
+      required: ["mother_message"],
+    };
+
+    const request = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generation_config: {
+        responseMimeType: "application/json",
+        responseSchema: response_schema,
+      },
+    };
+
+    const response = await generativeModel.generateContent(request);
+    const result = await response.response;
+    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+
     logger.info("テキストの生成が完了しました");
-    return generatedText;
+    return jsonResponse.mother_message;
   } catch (error) {
     logger.error("Gemini APIでエラーが発生しました", error);
     throw error;
