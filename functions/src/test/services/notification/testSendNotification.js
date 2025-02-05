@@ -21,17 +21,12 @@ const testSendNotification = async () => {
       throw new Error("テスト用のFCMトークンが設定されていません");
     }
 
-    const validMessage = {
+    const validData = {
       token: validToken,
-      title: "テスト通知",
-      body: "これはテスト通知です",
-      data: {
-        type: "weather",
-        areaCode: "130000",
-      },
+      message: "これはテスト通知です",
     };
 
-    const result = await sendNotification(validMessage);
+    const result = await sendNotification(validData);
     if (!result || !result.messageId) {
       throw new Error("通知の送信に失敗しました");
     }
@@ -41,12 +36,11 @@ const testSendNotification = async () => {
     // テストケース2: 無効なトークンで通知を送信
     logger.testCase("無効なトークンで通知を送信");
     try {
-      const invalidMessage = {
+      const invalidData = {
         token: "invalid_token",
-        title: "テスト通知",
-        body: "これはテスト通知です",
+        message: "これはテスト通知です",
       };
-      await sendNotification(invalidMessage);
+      await sendNotification(invalidData);
       throw new Error("無効なトークンでの送信が成功してしまいました");
     } catch (error) {
       if (error.message === "無効なトークンでの送信が成功してしまいました") {

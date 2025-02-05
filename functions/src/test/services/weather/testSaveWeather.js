@@ -3,8 +3,12 @@
  */
 
 const { saveWeatherMessage } = require("../../../services/weather");
-const { initializeFirebase, cleanupTestData } = require("../../utils/testHelper");
-const { COLLECTIONS } = require("../../../config");
+const {
+  initializeFirebase,
+  cleanupTestData,
+  createTestWeatherData,
+} = require("../../utils/testHelper");
+const { COLLECTIONS } = require("../../../config/firestore");
 const logger = require("../../utils/testLogger");
 
 const testSaveWeather = async () => {
@@ -17,11 +21,11 @@ const testSaveWeather = async () => {
 
     // テストケース1: 有効なデータを保存
     logger.testCase("有効なデータを保存");
+    const weatherData = createTestWeatherData("130000");
     const validData = {
-      message: "テスト天気メッセージ",
       areaCode: "130000",
-      areaName: "東京",
-      isTest: true,
+      weatherData,
+      message: "テスト天気メッセージ",
     };
     const docId = await saveWeatherMessage(validData);
 
@@ -38,7 +42,6 @@ const testSaveWeather = async () => {
       const invalidData = {
         // 必須フィールドを欠落
         areaCode: "130000",
-        isTest: true,
       };
       await saveWeatherMessage(invalidData);
       throw new Error("無効なデータが保存されてしまいました");
@@ -54,7 +57,7 @@ const testSaveWeather = async () => {
   } finally {
     // テストデータのクリーンアップ
     try {
-      await cleanupTestData(COLLECTIONS.WEATHER_MESSAGES);
+      await cleanupTestData(COLLECTIONS.WEATHER_DATA);
     } catch (error) {
       logger.error("テストデータのクリーンアップに失敗しました", error);
     }

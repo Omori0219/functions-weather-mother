@@ -3,7 +3,7 @@
  */
 
 const admin = require("firebase-admin");
-const { COLLECTIONS } = require("../../config");
+const { COLLECTIONS } = require("../../config/firestore");
 
 const initializeFirebase = () => {
   if (admin.apps.length === 0) {

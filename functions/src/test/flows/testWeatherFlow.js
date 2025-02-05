@@ -8,7 +8,7 @@ const {
   saveWeatherMessage,
 } = require("../../../services/weather");
 const { initializeFirebase, cleanupTestData } = require("../../utils/testHelper");
-const { COLLECTIONS } = require("../../../config");
+const { COLLECTIONS } = require("../../../config/firestore");
 const logger = require("../../utils/testLogger");
 
 const testWeatherFlow = async () => {
@@ -42,8 +42,7 @@ const testWeatherFlow = async () => {
     const saveData = {
       message,
       areaCode: "130000",
-      areaName: "東京",
-      isTest: true,
+      weatherData,
     };
     const docId = await saveWeatherMessage(saveData);
     if (!docId) {
@@ -57,7 +56,7 @@ const testWeatherFlow = async () => {
   } finally {
     // テストデータのクリーンアップ
     try {
-      await cleanupTestData(COLLECTIONS.WEATHER_MESSAGES);
+      await cleanupTestData(COLLECTIONS.WEATHER_DATA);
     } catch (error) {
       logger.error("テストデータのクリーンアップに失敗しました", error);
     }
