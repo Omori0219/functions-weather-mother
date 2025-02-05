@@ -2,14 +2,10 @@
  * 天気予報フローの統合テスト
  */
 
-const {
-  fetchWeatherData,
-  analyzeWeather,
-  saveWeatherMessage,
-} = require("../../../services/weather");
-const { initializeFirebase, cleanupTestData } = require("../../utils/testHelper");
-const { COLLECTIONS } = require("../../../config/firestore");
-const logger = require("../../utils/testLogger");
+const { fetchWeatherData, analyzeWeather, saveWeatherMessage } = require("../../services/weather");
+const { initializeFirebase, cleanupTestData } = require("../utils/testHelper");
+const { COLLECTIONS } = require("../../config/firestore");
+const logger = require("../utils/testLogger");
 
 const testWeatherFlow = async () => {
   let success = true;
