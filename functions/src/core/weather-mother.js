@@ -22,7 +22,7 @@ async function processWeatherData(areaCode) {
       areaCode,
       weatherForecasts: JSON.stringify(weatherData),
       generatedMessage: motherMessage,
-      createdat: new Date(),
+      createdAt: new Date(),
     });
 
     logger.info("処理が完了しました！");

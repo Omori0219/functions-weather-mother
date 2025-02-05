@@ -15,7 +15,7 @@ async function saveWeatherData({
   areaCode,
   weatherForecasts,
   generatedMessage,
-  createdat,
+  createdAt,
 }) {
   try {
     const docRef = db.collection(COLLECTION_NAME).doc(documentId);
@@ -24,7 +24,7 @@ async function saveWeatherData({
       areaCode,
       weatherForecasts,
       generatedMessage,
-      createdAt: admin.firestore.Timestamp.fromDate(createdat),
+      createdAt: admin.firestore.Timestamp.fromDate(createdAt),
     });
 
     logger.info("Document successfully written!");

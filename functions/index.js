@@ -179,13 +179,13 @@ exports.migrateFieldNames = onRequest(
             data.area_code ||
             data.weather_forecasts ||
             data.generated_message ||
-            data.createdat
+            data.createdAt
           ) {
             await doc.ref.set({
               areaCode: data.area_code || data.areaCode,
               weatherForecasts: data.weather_forecasts || data.weatherForecasts,
               generatedMessage: data.generated_message || data.generatedMessage,
-              createdAt: data.createdat || data.createdAt,
+              createdAt: data.createdAt || data.createdAt,
             });
             migratedCount++;
             logger.info(`ドキュメント ${doc.id} を移行しました`);
