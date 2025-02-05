@@ -1,5 +1,9 @@
+/**
+ * Gemini APIクライアント
+ * AIを使用したメッセージ生成機能を提供します
+ */
+
 const { VertexAI } = require("@google-cloud/vertexai");
-const { GoogleAuth } = require("google-auth-library");
 const logger = require("../utils/logger");
 
 // Vertex AI の設定
@@ -20,7 +24,7 @@ const MAX_RETRIES = VERTEX_AI_CONFIG.MAX_RETRIES;
 
 // リクエスト間隔の制御用
 let lastRequestTime = 0;
-const minRequestInterval = 20000; // 20秒に変更
+const minRequestInterval = 20000; // 20秒
 
 // スリープ関数
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,6 +67,11 @@ const withRetry = async (operation) => {
   }
 };
 
+/**
+ * Gemini APIを使用してメッセージを生成する
+ * @param {string} prompt - 生成のためのプロンプト
+ * @returns {Promise<string>} 生成されたメッセージ
+ */
 async function getGeminiResponse(prompt) {
   const vertexAI = new VertexAI({
     project: projectId,
@@ -105,10 +114,10 @@ async function getGeminiResponse(prompt) {
 
     return jsonResponse.mother_message;
   } catch (error) {
-    logger.error("Gemini API error", error);
+    logger.error("Gemini API エラー", error);
     if (error instanceof SyntaxError) {
       logger.error(
-        "JSON parsing failed. Raw response:",
+        "JSONパースに失敗しました。生のレスポンス:",
         result?.candidates[0]?.content?.parts[0]?.text
       );
     }
