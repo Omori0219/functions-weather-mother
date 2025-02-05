@@ -1,72 +1,67 @@
 /**
  * 通知ドメイン
- * 通知に関する機能を統合し、アプリケーション層に提供します
+ * プッシュ通知の送信とユーザー設定の管理を行います
  */
 
-const { sendNotification } = require("./notification-sender");
-const { getNotificationUsers, updateNotificationSettings } = require("./user-preferences");
-const { getStoredWeatherData } = require("../weather");
+const { sendPushNotification } = require("../../clients/expo");
+const { getWeatherDataByDate } = require("../../clients/firebase");
 const logger = require("../../utils/logger");
+const admin = require("firebase-admin");
 
 /**
- * 全ユーザーに通知を送信する
- * @returns {Promise<Object>} 処理結果
+ * 全ユーザーに通知を送信
+ * @returns {Promise<void>}
  */
 async function sendNotificationsToAllUsers() {
+  const db = admin.firestore();
+  const today = new Date();
+  const formattedDate = today.toISOString().split("T")[0].replace(/-/g, "");
+
   try {
-    logger.info("全ユーザーへの通知送信を開始します");
+    logger.info("全ユーザーへの通知送信を開始します...");
 
-    // 通知対象ユーザーを取得
-    const users = await getNotificationUsers();
-    logger.info(`${users.length}人のユーザーに通知を送信します`);
+    // 通知を有効にしているユーザーを取得
+    const usersSnapshot = await db
+      .collection("users")
+      .where("isPushNotificationEnabled", "==", true)
+      .get();
 
-    const results = {
-      success: [],
-      failed: [],
-    };
+    if (usersSnapshot.empty) {
+      logger.info("通知対象のユーザーが見つかりませんでした");
+      return;
+    }
 
-    // 各ユーザーに通知を送信
-    for (const user of users) {
+    // ユーザーごとに通知を送信
+    const notificationPromises = usersSnapshot.docs.map(async (userDoc) => {
+      const userData = userDoc.data();
+      const { areaCode, expoPushToken } = userData;
+
       try {
-        // ユーザーの地域の天気予報を取得
-        const weatherData = await getStoredWeatherData(user.areaCode);
+        // 天気データを取得
+        const weatherData = await getWeatherDataByDate(areaCode, formattedDate);
         if (!weatherData) {
-          logger.warn(
-            `天気予報データが見つかりません (ユーザーID: ${user.id}, 地域コード: ${user.areaCode})`
-          );
-          results.failed.push({
-            userId: user.id,
-            error: "天気予報データが見つかりません",
-          });
-          continue;
+          logger.warn(`天気データが見つかりません: ${areaCode}, ${formattedDate}`);
+          return;
         }
 
         // 通知を送信
-        await sendNotification({
-          token: user.expoPushToken,
-          message: weatherData.generatedMessage,
+        await sendPushNotification(expoPushToken, {
+          title: "今日の天気予報",
+          body: weatherData.generatedMessage,
+          data: {
+            areaCode,
+            date: formattedDate,
+          },
         });
 
-        results.success.push({
-          userId: user.id,
-          areaCode: user.areaCode,
-        });
+        logger.info(`通知送信成功: ${userDoc.id}`);
       } catch (error) {
-        logger.error(`ユーザーへの通知送信に失敗しました (ユーザーID: ${user.id}):`, error);
-        results.failed.push({
-          userId: user.id,
-          error: error.message,
-        });
+        logger.error(`ユーザーへの通知送信に失敗: ${userDoc.id}`, error);
       }
-    }
-
-    logger.info("全ユーザーへの通知送信が完了しました", {
-      total: users.length,
-      success: results.success.length,
-      failed: results.failed.length,
     });
 
-    return results;
+    await Promise.all(notificationPromises);
+    logger.info("全ユーザーへの通知送信が完了しました");
   } catch (error) {
     logger.error("通知送信処理でエラーが発生しました:", error);
     throw error;
@@ -74,16 +69,36 @@ async function sendNotificationsToAllUsers() {
 }
 
 /**
- * ユーザーの通知設定を更新する
+ * ユーザーの通知設定を更新
  * @param {string} userId - ユーザーID
  * @param {Object} settings - 更新する設定
+ * @param {boolean} settings.isPushNotificationEnabled - 通知の有効/無効
+ * @param {string} [settings.expoPushToken] - Expoプッシュトークン
  * @returns {Promise<void>}
  */
 async function updateUserNotificationSettings(userId, settings) {
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(userId);
+
   try {
-    await updateNotificationSettings(userId, settings);
+    logger.info(`ユーザーの通知設定を更新します: ${userId}`);
+
+    const updateData = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (typeof settings.isPushNotificationEnabled === "boolean") {
+      updateData.isPushNotificationEnabled = settings.isPushNotificationEnabled;
+    }
+
+    if (settings.expoPushToken) {
+      updateData.expoPushToken = settings.expoPushToken;
+    }
+
+    await userRef.update(updateData);
+    logger.info(`通知設定の更新が完了しました: ${userId}`);
   } catch (error) {
-    logger.error(`通知設定の更新でエラーが発生しました (ユーザーID: ${userId}):`, error);
+    logger.error(`通知設定の更新に失敗しました: ${userId}`, error);
     throw error;
   }
 }
