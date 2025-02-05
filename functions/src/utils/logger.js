@@ -3,126 +3,56 @@
  * @file logger.js
  */
 
-const { isTestEnvironment } = require("../config/environment");
+const { isProductionEnvironment } = require("../config/environment");
 
-/**
- * ログレベルの定義
- */
-const LogLevel = {
-  DEBUG: "DEBUG",
-  INFO: "INFO",
-  WARN: "WARN",
-  ERROR: "ERROR",
+// ログレベルの定義
+const LOG_LEVELS = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
 };
 
-/**
- * 基本的なメタデータを生成
- * @returns {Object} メタデータ
- */
-function generateBaseMetadata() {
-  return {
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    isTestEnvironment: isTestEnvironment,
-    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-  };
-}
+// 現在の環境に応じたログレベルの設定
+const currentLogLevel = isProductionEnvironment ? LOG_LEVELS.INFO : LOG_LEVELS.DEBUG;
 
 /**
- * エラーオブジェクトを安全にシリアライズ
- * @param {Error} error - エラーオブジェクト
- * @returns {Object} シリアライズされたエラー情報
- */
-function serializeError(error) {
-  if (!error) return null;
-  return {
-    name: error.name,
-    message: error.message,
-    stack: error.stack,
-    code: error.code,
-  };
-}
-
-/**
- * ログ出力
+ * タイムスタンプ付きのメッセージを生成
  * @param {string} level - ログレベル
  * @param {string} message - ログメッセージ
  * @param {Object} [data] - 追加データ
+ * @returns {string} フォーマットされたログメッセージ
  */
-function log(level, message, data = {}) {
-  const baseMetadata = generateBaseMetadata();
-
-  // エラーオブジェクトの特別処理
-  if (data.error) {
-    data.error = serializeError(data.error);
-  }
-
-  const logData = {
-    ...baseMetadata,
-    level,
-    message,
-    ...data,
-  };
-
-  // テスト環境では色付きで出力
-  if (isTestEnvironment) {
-    const colors = {
-      DEBUG: "\x1b[36m", // シアン
-      INFO: "\x1b[32m", // 緑
-      WARN: "\x1b[33m", // 黄
-      ERROR: "\x1b[31m", // 赤
-    };
-    const reset = "\x1b[0m";
-    console.log(`${colors[level]}[${level}]${reset} ${message}`);
-    if (Object.keys(data).length > 0) {
-      console.log(JSON.stringify(data, null, 2));
-    }
-  } else {
-    // 本番環境ではJSONとして出力
-    console.log(JSON.stringify(logData));
-  }
-}
-
-/**
- * デバッグログ
- * @param {string} message - ログメッセージ
- * @param {Object} [data] - 追加データ
- */
-function debug(message, data = {}) {
-  log(LogLevel.DEBUG, message, data);
-}
-
-/**
- * 情報ログ
- * @param {string} message - ログメッセージ
- * @param {Object} [data] - 追加データ
- */
-function info(message, data = {}) {
-  log(LogLevel.INFO, message, data);
-}
-
-/**
- * 警告ログ
- * @param {string} message - ログメッセージ
- * @param {Object} [data] - 追加データ
- */
-function warn(message, data = {}) {
-  log(LogLevel.WARN, message, data);
-}
-
-/**
- * エラーログ
- * @param {string} message - ログメッセージ
- * @param {Object} [data] - 追加データ
- */
-function error(message, data = {}) {
-  log(LogLevel.ERROR, message, data);
-}
-
-module.exports = {
-  LogLevel,
-  debug,
-  info,
-  warn,
-  error,
+const formatMessage = (level, message, data) => {
+  const timestamp = new Date().toISOString();
+  const dataString = data ? `\n${JSON.stringify(data, null, 2)}` : "";
+  return `[${timestamp}] ${level}: ${message}${dataString}`;
 };
+
+const logger = {
+  error: (message, data) => {
+    if (currentLogLevel >= LOG_LEVELS.ERROR) {
+      console.error(formatMessage("ERROR", message, data));
+    }
+  },
+
+  warn: (message, data) => {
+    if (currentLogLevel >= LOG_LEVELS.WARN) {
+      console.warn(formatMessage("WARN", message, data));
+    }
+  },
+
+  info: (message, data) => {
+    if (currentLogLevel >= LOG_LEVELS.INFO) {
+      console.info(formatMessage("INFO", message, data));
+    }
+  },
+
+  debug: (message, data) => {
+    if (currentLogLevel >= LOG_LEVELS.DEBUG) {
+      console.debug(formatMessage("DEBUG", message, data));
+    }
+  },
+};
+
+module.exports = logger;

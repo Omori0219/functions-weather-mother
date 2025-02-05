@@ -3,16 +3,37 @@
  * @file date.js
  */
 
+const { DEFAULTS } = require("../config/constants");
+
 /**
- * 天気データのドキュメントIDを生成
- * @param {string} areaCode - 地域コード
- * @returns {string} ドキュメントID（YYYYMMDD-areaCode形式）
+ * 現在の日本時間を取得
+ * @returns {Date} 日本時間のDateオブジェクト
  */
-function generateDocumentId(areaCode) {
-  const today = new Date();
-  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
-  return `${dateStr}-${areaCode}`;
-}
+const getCurrentJSTDate = () => {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: DEFAULTS.TIMEZONE }));
+};
+
+/**
+ * 日付をYYYYMMDD形式の文字列に変換
+ * @param {Date} date - 対象の日付
+ * @returns {string} YYYYMMDD形式の文字列
+ */
+const formatDateToYYYYMMDD = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+};
+
+/**
+ * ドキュメントIDを生成（エリアコード_YYYYMMDD形式）
+ * @param {string} areaCode - 地域コード
+ * @returns {string} 生成されたドキュメントID
+ */
+const generateDocumentId = (areaCode) => {
+  const date = getCurrentJSTDate();
+  return `${areaCode}_${formatDateToYYYYMMDD(date)}`;
+};
 
 /**
  * 指定された日付が今日かどうかを判定
@@ -29,6 +50,8 @@ function isToday(date) {
 }
 
 module.exports = {
+  getCurrentJSTDate,
+  formatDateToYYYYMMDD,
   generateDocumentId,
   isToday,
 };
