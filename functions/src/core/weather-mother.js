@@ -17,12 +17,17 @@ async function processWeatherData(areaCode) {
 
     logger.info("データを保存中...");
     const documentId = generateDocumentId(areaCode);
+
+    // createdAtを確実にDateオブジェクトとして生成
+    const now = new Date();
+    logger.info("Creating document with timestamp:", now);
+
     await saveWeatherData({
       documentId,
       areaCode,
       weatherForecasts: JSON.stringify(weatherData),
       generatedMessage: motherMessage,
-      createdAt: new Date(),
+      createdAt: now,
     });
 
     logger.info("処理が完了しました！");
