@@ -4,92 +4,76 @@
  */
 
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
+const logger = require("../utils/logger");
 const { COLLECTIONS } = require("../config/firestore");
-const { info, error } = require("../utils/logger");
-const { getDb } = require("../utils/firestore");
 
-/**
- * 天気予報データを保存
- * @param {Object} params - 保存するデータのパラメータ
- * @param {string} params.documentId - ドキュメントID
- * @param {string} params.areaCode - 地域コード
- * @param {Object} params.weatherForecasts - 天気予報データ
- * @param {string} params.generatedMessage - 生成されたメッセージ
- * @param {Date} params.createdat - 作成日時
- * @returns {Promise<boolean>} 保存成功時はtrue
- */
-async function saveWeatherData({
-  documentId,
-  areaCode,
-  weatherForecasts,
-  generatedMessage,
-  createdat,
-}) {
-  const startTime = Date.now();
-  const collection = COLLECTIONS.WEATHER_DATA;
-
-  info("天気予報データの保存を開始", {
-    operation: "saveWeatherData",
-    collection,
-    documentId,
-    areaCode,
-    hasWeatherForecasts: !!weatherForecasts,
-    hasGeneratedMessage: !!generatedMessage,
-  });
-
-  try {
-    const db = getDb();
-    const docRef = db.collection(collection).doc(documentId);
-    const data = {
-      areaCode,
-      weatherForecasts,
-      generatedMessage,
-      createdAt: admin.firestore.Timestamp.fromDate(createdat),
-    };
-
-    await docRef.set(data);
-
-    // 書き込み後の検証
-    const writtenDoc = await docRef.get();
-    if (!writtenDoc.exists) {
-      throw new Error("Document not found after write");
-    }
-
-    const endTime = Date.now();
-    info("天気予報データを保存しました", {
-      operation: "saveWeatherData",
-      status: "success",
-      collection,
-      documentId,
-      areaCode,
-      processingTimeMs: endTime - startTime,
-      data: {
-        hasWeatherForecasts: !!weatherForecasts,
-        hasGeneratedMessage: !!generatedMessage,
-        createdAt: createdat.toISOString(),
-      },
-    });
-
-    return true;
-  } catch (err) {
-    const endTime = Date.now();
-    error("天気予報データの保存に失敗", {
-      operation: "saveWeatherData",
-      status: "error",
-      collection,
-      documentId,
-      areaCode,
-      processingTimeMs: endTime - startTime,
-      error: err,
-      data: {
-        hasWeatherForecasts: !!weatherForecasts,
-        hasGeneratedMessage: !!generatedMessage,
-        createdAt: createdat.toISOString(),
-      },
-    });
-    throw err;
-  }
+// Firebase Admin の初期化
+if (!admin.apps.length) {
+  admin.initializeApp();
 }
 
-module.exports = { saveWeatherData };
+/**
+ * Firebaseクライアント
+ */
+const firebaseClient = {
+  /**
+   * 天気予報メッセージをFirestoreに保存
+   * @param {string} areaCode - 地域コード
+   * @param {Object} weatherData - 天気予報データ
+   * @param {string} message - 生成されたメッセージ
+   * @returns {Promise<string>} 保存されたドキュメントID
+   * @throws {Error} 保存エラー
+   */
+  async saveWeatherMessage(areaCode, weatherData, message) {
+    try {
+      logger.info(`天気予報メッセージの保存開始: ${areaCode}`);
+
+      const docRef = await admin.firestore().collection(COLLECTIONS.WEATHER_DATA).add({
+        areaCode,
+        weatherData,
+        message,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      logger.info(`天気予報メッセージの保存完了: ${docRef.id}`);
+      return docRef.id;
+    } catch (error) {
+      logger.error("天気予報メッセージの保存エラー", {
+        areaCode,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * プッシュ通知を送信
+   * @param {string} token - FCMトークン
+   * @param {string} message - 通知メッセージ
+   * @returns {Promise<string>} 送信結果
+   * @throws {Error} 送信エラー
+   */
+  async sendNotification(token, message) {
+    try {
+      logger.info("プッシュ通知の送信開始");
+
+      const response = await admin.messaging().send({
+        token,
+        notification: {
+          title: "今日の天気",
+          body: message,
+        },
+      });
+
+      logger.info("プッシュ通知の送信完了");
+      return response;
+    } catch (error) {
+      logger.error("プッシュ通知の送信エラー", {
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+};
+
+module.exports = firebaseClient;
