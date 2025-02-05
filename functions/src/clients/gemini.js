@@ -1,54 +1,135 @@
 /**
- * Gemini AI クライアント
+ * Google Gemini APIクライアント
  * @file gemini.js
  */
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const logger = require("../utils/logger");
-
-// Geminiモデルの初期化
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const { VertexAI } = require("@google-cloud/vertexai");
+const { info, error, debug } = require("../utils/logger");
 
 /**
- * 天気予報データを母のような口調に変換
- * @param {Object} weatherData - 気象庁APIから取得した天気予報データ
- * @returns {Promise<string>} 生成されたメッセージ
- * @throws {Error} AI生成エラー
+ * Vertex AI の設定
  */
-const generateMotherlikeMessage = async (weatherData) => {
-  try {
-    logger.info("天気予報メッセージの生成開始");
+const VERTEX_AI_CONFIG = {
+  LOCATION: process.env.VERTEX_AI_LOCATION || "asia-northeast1",
+  MODEL: process.env.VERTEX_AI_MODEL || "gemini-1.5-flash",
+  // リトライ設定
+  INITIAL_RETRY_DELAY: 5000, // 5秒
+  MAX_RETRY_DELAY: 60000, // 60秒
+  MAX_RETRIES: 5, // 最大リトライ回数
+  MIN_REQUEST_INTERVAL: 20000, // 20秒
+};
 
-    // プロンプトの作成
-    const prompt = `
-あなたは優しい母親として、以下の天気予報データを子供に伝えるように説明してください。
-心配性で優しい母親らしく、天気に応じた注意点やアドバイスも含めてください。
+// リクエスト間隔の制御用
+let lastRequestTime = 0;
 
-天気予報データ:
-${JSON.stringify(weatherData, null, 2)}
+/**
+ * 指定時間スリープ
+ * @param {number} ms - スリープ時間（ミリ秒）
+ * @returns {Promise<void>}
+ */
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-以下の点に注意して生成してください：
-- 「ね」「よ」などの女性的な語尾を使用
-- 具体的な数値（気温、降水確率など）は保持
-- 季節感のある表現を使用
-- 200文字程度で簡潔に
-`;
+/**
+ * リクエストの間隔を制御
+ * @returns {Promise<void>}
+ */
+const throttleRequest = async () => {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
 
-    // メッセージの生成
-    const result = await model.generateContent(prompt);
-    const message = result.response.text();
+  if (timeSinceLastRequest < VERTEX_AI_CONFIG.MIN_REQUEST_INTERVAL) {
+    const waitTime = VERTEX_AI_CONFIG.MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    debug(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
+    await sleep(waitTime);
+  }
 
-    logger.info("天気予報メッセージの生成完了");
-    return message;
-  } catch (error) {
-    logger.error("天気予報メッセージの生成エラー", {
-      error: error.message,
-    });
-    throw new Error(`Failed to generate weather message: ${error.message}`);
+  lastRequestTime = Date.now();
+};
+
+/**
+ * リトライ処理を実行
+ * @param {Function} operation - 実行する非同期操作
+ * @returns {Promise<any>} 操作の結果
+ */
+const withRetry = async (operation) => {
+  let retryCount = 0;
+  let delay = VERTEX_AI_CONFIG.INITIAL_RETRY_DELAY;
+
+  while (true) {
+    try {
+      await throttleRequest();
+      return await operation();
+    } catch (err) {
+      if (err?.code === 429 && retryCount < VERTEX_AI_CONFIG.MAX_RETRIES) {
+        retryCount++;
+        info(`レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`);
+        await sleep(delay);
+        delay = Math.min(delay * 2, VERTEX_AI_CONFIG.MAX_RETRY_DELAY);
+        continue;
+      }
+      throw err;
+    }
   }
 };
 
-module.exports = {
-  generateMotherlikeMessage,
-};
+/**
+ * Gemini APIからレスポンスを取得
+ * @param {string} prompt - 入力プロンプト
+ * @returns {Promise<string>} 生成されたメッセージ
+ */
+async function getGeminiResponse(prompt) {
+  const vertexAI = new VertexAI({
+    project: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    location: VERTEX_AI_CONFIG.LOCATION,
+  });
+
+  const generativeModel = vertexAI.preview.getGenerativeModel({
+    model: VERTEX_AI_CONFIG.MODEL,
+  });
+
+  const response_schema = {
+    type: "object",
+    properties: {
+      mother_message: { type: "string" },
+    },
+    required: ["mother_message"],
+  };
+
+  try {
+    info("Gemini APIリクエストを開始", { prompt: prompt.substring(0, 100) + "..." });
+
+    const request = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generation_config: {
+        responseMimeType: "application/json",
+        responseSchema: response_schema,
+      },
+    };
+
+    // リトライ機能を使用してAPIリクエストを実行
+    const response = await withRetry(async () => {
+      return await generativeModel.generateContent(request);
+    });
+
+    const result = await response.response;
+    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+
+    info("Gemini APIレスポンスを受信");
+    return jsonResponse.mother_message;
+  } catch (err) {
+    error("Gemini APIエラー", { error: err });
+    if (err instanceof SyntaxError) {
+      error("JSONパースに失敗", {
+        response: result?.candidates[0]?.content?.parts[0]?.text,
+      });
+    }
+    throw err;
+  }
+}
+
+module.exports = { getGeminiResponse };

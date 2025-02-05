@@ -9,15 +9,6 @@ const { COLLECTIONS } = require("../config/firestore");
 const { info, error } = require("../utils/logger");
 const { getDb } = require("../utils/firestore");
 
-// Firebase Admin SDKの初期化（未初期化の場合のみ）
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-// Firestoreインスタンスの取得
-const db = admin.firestore();
-const messaging = admin.messaging();
-
 /**
  * 天気予報データを保存
  * @param {Object} params - 保存するデータのパラメータ
@@ -48,13 +39,13 @@ async function saveWeatherData({
   });
 
   try {
+    const db = getDb();
     const docRef = db.collection(collection).doc(documentId);
     const data = {
       areaCode,
       weatherForecasts,
       generatedMessage,
       createdAt: admin.firestore.Timestamp.fromDate(createdat),
-      updatedAt: admin.firestore.Timestamp.fromDate(createdat),
     };
 
     await docRef.set(data);
@@ -101,45 +92,4 @@ async function saveWeatherData({
   }
 }
 
-/**
- * プッシュ通知を送信
- * @param {string} token - FCMトークン
- * @param {string} message - 通知メッセージ
- * @returns {Promise<string>} メッセージID
- * @throws {Error} FCM送信エラー
- */
-const sendPushNotification = async (token, message) => {
-  try {
-    info("プッシュ通知の送信開始", { token });
-
-    const response = await messaging.send({
-      token,
-      notification: {
-        title: "今日の天気予報",
-        body: message,
-      },
-      android: {
-        priority: "high",
-        notification: {
-          channelId: "weather_notification",
-        },
-      },
-    });
-
-    info("プッシュ通知の送信完了", { messageId: response });
-    return response;
-  } catch (error) {
-    error("プッシュ通知の送信エラー", {
-      token,
-      error: error.message,
-    });
-    throw new Error(`Failed to send push notification: ${error.message}`);
-  }
-};
-
-module.exports = {
-  db,
-  messaging,
-  saveWeatherData,
-  sendPushNotification,
-};
+module.exports = { saveWeatherData };
