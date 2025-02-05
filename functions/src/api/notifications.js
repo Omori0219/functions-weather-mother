@@ -1,246 +1,178 @@
 /**
  * 通知API
- * テスト用のエンドポイントを提供します
+ * 通知の送信と設定管理のエンドポイントを提供します
  */
 
 const { onRequest } = require("firebase-functions/v2/https");
 const {
-  sendNotificationsToAllUsers,
-  updateUserNotificationSettings,
+  sendWeatherNotificationToUser,
+  getUserNotificationSettings,
+  updateNotificationSettings,
 } = require("../domain/notifications");
+const { API_TIMEOUT_SECONDS, API_MEMORY, REGION, TEST_SECRET } = require("../config/env");
 const logger = require("../utils/logger");
 
 /**
- * 通知送信のテスト用エンドポイント
+ * Basic認証のチェック
+ * @param {Object} req - リクエストオブジェクト
+ * @returns {boolean} 認証が成功したかどうか
  */
-exports.testNotifications = onRequest(
+function checkBasicAuth(req) {
+  const authHeader = req.headers.authorization || "";
+  const expectedAuth = `Basic ${Buffer.from(`admin:${TEST_SECRET.value()}`).toString("base64")}`;
+  return authHeader === expectedAuth;
+}
+
+/**
+ * 通知設定を取得
+ */
+exports.getNotificationSettings = onRequest(
   {
-    timeoutSeconds: 540, // タイムアウト: 9分
-    memory: "256MiB",
-    region: "asia-northeast1",
+    timeoutSeconds: API_TIMEOUT_SECONDS.value(),
+    memory: API_MEMORY.value(),
+    region: REGION.value(),
   },
   async (req, res) => {
-    // Basic認証チェック
-    const authHeader = req.headers.authorization || "";
-    const expectedAuth = `Basic ${Buffer.from(`admin:${process.env.TEST_SECRET}`).toString(
-      "base64"
-    )}`;
-
-    if (authHeader !== expectedAuth) {
-      res.status(401).send("Unauthorized");
-      return;
-    }
-
     try {
-      logger.info("プッシュ通知テストを開始します...");
-      const { testType, expoPushToken, expoPushTokens } = req.body;
+      const { userId } = req.query;
 
-      let result;
-      switch (testType) {
-        case "basic":
-          if (!expoPushToken) {
-            throw new Error("expoPushTokenが必要です");
-          }
-          result = await testBasicNotification(expoPushToken);
-          break;
-
-        case "missingWeather":
-          if (!expoPushToken) {
-            throw new Error("expoPushTokenが必要です");
-          }
-          result = await testMissingWeatherData(expoPushToken);
-          break;
-
-        case "multipleUsers":
-          if (!expoPushTokens || !Array.isArray(expoPushTokens)) {
-            throw new Error("expoPushTokensの配列が必要です");
-          }
-          result = await testMultipleUsers(expoPushTokens);
-          break;
-
-        case "realWeather":
-          result = await testRealWeatherNotification();
-          break;
-
-        default:
-          throw new Error("無効なテストタイプです");
+      // パラメータのバリデーション
+      if (!userId) {
+        logger.error("ユーザーIDが指定されていません");
+        res.status(400).json({
+          status: "error",
+          error: "ユーザーIDが必要です",
+        });
+        return;
       }
 
-      logger.info("テスト結果:", result);
-      res.json(result);
+      logger.info(`通知設定を取得します: ${userId}`);
+
+      // 通知設定を取得
+      const settings = await getUserNotificationSettings(userId);
+
+      if (!settings) {
+        res.status(404).json({
+          status: "error",
+          error: "ユーザーが見つかりません",
+        });
+        return;
+      }
+
+      res.json({
+        status: "success",
+        data: settings,
+      });
     } catch (error) {
-      logger.error("テスト実行中にエラーが発生しました:", error);
+      logger.error("通知設定の取得でエラーが発生しました:", error);
       res.status(500).json({
         status: "error",
-        error: error.message,
+        error: "通知設定の取得に失敗しました",
       });
     }
   }
 );
 
 /**
- * 基本的な正常系のテスト
- * @param {string} expoPushToken - 有効なプッシュトークン
+ * 通知設定を更新
  */
-async function testBasicNotification(expoPushToken) {
-  try {
-    // テストユーザーの作成
-    const userId = await createTestUser({
-      areaCode: "130000", // 東京
-      expoPushToken,
-      isPushNotificationEnabled: true,
-    });
+exports.updateNotificationSettings = onRequest(
+  {
+    timeoutSeconds: API_TIMEOUT_SECONDS.value(),
+    memory: API_MEMORY.value(),
+    region: REGION.value(),
+  },
+  async (req, res) => {
+    try {
+      const { userId } = req.query;
+      const settings = req.body;
 
-    // テスト用の天気情報を作成
-    const weatherId = await createTestWeatherData("130000");
+      // パラメータのバリデーション
+      if (!userId) {
+        logger.error("ユーザーIDが指定されていません");
+        res.status(400).json({
+          status: "error",
+          error: "ユーザーIDが必要です",
+        });
+        return;
+      }
 
-    // 通知送信
-    await sendNotificationsToAllUsers();
+      if (!settings || typeof settings !== "object") {
+        logger.error("通知設定が不正です", { settings });
+        res.status(400).json({
+          status: "error",
+          error: "通知設定が必要です",
+        });
+        return;
+      }
 
-    // テストデータのクリーンアップ
-    await cleanupTestData([userId], [weatherId]);
+      logger.info(`通知設定を更新します: ${userId}`);
 
-    return {
-      success: true,
-      message: "基本的な正常系のテストが完了しました",
-    };
-  } catch (error) {
-    throw new Error(`基本的な正常系のテストが失敗しました: ${error.message}`);
-  }
-}
+      // 通知設定を更新
+      await updateNotificationSettings(userId, settings);
 
-/**
- * 天気情報が未生成の場合のテスト
- * @param {string} expoPushToken - 有効なプッシュトークン
- */
-async function testMissingWeatherData(expoPushToken) {
-  try {
-    // テストユーザーの作成（天気情報は作成しない）
-    const userId = await createTestUser({
-      areaCode: "130000",
-      expoPushToken,
-      isPushNotificationEnabled: true,
-    });
-
-    // 通知処理の実行（エラーになることを期待）
-    await sendNotificationsToAllUsers();
-
-    // テストデータのクリーンアップ
-    await cleanupTestData([userId], []);
-
-    return {
-      success: true,
-      message: "天気情報未生成のテストが完了しました",
-    };
-  } catch (error) {
-    throw new Error(`天気情報未生成のテストが失敗しました: ${error.message}`);
-  }
-}
-
-/**
- * 複数ユーザーへの一斉送信テスト
- * @param {string[]} expoPushTokens - 有効なプッシュトークンの配列
- */
-async function testMultipleUsers(expoPushTokens) {
-  const userIds = [];
-  const weatherIds = [];
-  const areaCodes = ["130000", "270000", "016000"]; // 東京、大阪、札幌
-
-  try {
-    // テストユーザーと天気情報の作成
-    for (let i = 0; i < Math.min(expoPushTokens.length, areaCodes.length); i++) {
-      const userId = await createTestUser({
-        areaCode: areaCodes[i],
-        expoPushToken: expoPushTokens[i],
-        isPushNotificationEnabled: true,
+      res.json({
+        status: "success",
       });
-      userIds.push(userId);
-
-      const weatherId = await createTestWeatherData(areaCodes[i]);
-      weatherIds.push(weatherId);
+    } catch (error) {
+      logger.error("通知設定の更新でエラーが発生しました:", error);
+      res.status(500).json({
+        status: "error",
+        error: "通知設定の更新に失敗しました",
+      });
     }
-
-    // 通知送信
-    await sendNotificationsToAllUsers();
-
-    // テストデータのクリーンアップ
-    await cleanupTestData(userIds, weatherIds);
-
-    return {
-      success: true,
-      message: "複数ユーザーへの一斉送信テストが完了しました",
-      details: {
-        testedUsers: userIds.length,
-        testedAreas: areaCodes.slice(0, userIds.length),
-      },
-    };
-  } catch (error) {
-    // エラー時もクリーンアップを実行
-    await cleanupTestData(userIds, weatherIds);
-    throw new Error(`複数ユーザーへの一斉送信テストが失敗しました: ${error.message}`);
   }
-}
+);
 
 /**
- * 実際の天気情報を使用した通知テスト
+ * テスト通知を送信
  */
-async function testRealWeatherNotification() {
-  try {
-    // 通知送信
-    await sendNotificationsToAllUsers();
+exports.sendTestNotification = onRequest(
+  {
+    timeoutSeconds: API_TIMEOUT_SECONDS.value(),
+    memory: API_MEMORY.value(),
+    region: REGION.value(),
+  },
+  async (req, res) => {
+    try {
+      // Basic認証のチェック
+      if (!checkBasicAuth(req)) {
+        res.status(401).json({
+          status: "error",
+          error: "認証が必要です",
+        });
+        return;
+      }
 
-    return {
-      success: true,
-      message: "実際の天気情報を使用した通知テストが完了しました",
-    };
-  } catch (error) {
-    throw new Error(`実際の天気情報を使用した通知テストが失敗しました: ${error.message}`);
+      const { userId } = req.body;
+
+      // パラメータのバリデーション
+      if (!userId) {
+        logger.error("ユーザーIDが指定されていません");
+        res.status(400).json({
+          status: "error",
+          error: "ユーザーIDが必要です",
+        });
+        return;
+      }
+
+      logger.info(`テスト通知を送信します: ${userId}`);
+
+      // 通知を送信
+      const result = await sendWeatherNotificationToUser(userId);
+
+      res.json({
+        status: "success",
+        data: {
+          sent: result,
+        },
+      });
+    } catch (error) {
+      logger.error("テスト通知の送信でエラーが発生しました:", error);
+      res.status(500).json({
+        status: "error",
+        error: "テスト通知の送信に失敗しました",
+      });
+    }
   }
-}
-
-// テストデータ作成・クリーンアップ用のヘルパー関数
-async function createTestUser(userData) {
-  const db = admin.firestore();
-  const userRef = await db.collection("users").add({
-    ...userData,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-  return userRef.id;
-}
-
-async function createTestWeatherData(areaCode) {
-  const db = admin.firestore();
-  const today = new Date();
-  const formattedDate = today.toISOString().split("T")[0].replace(/-/g, "");
-  const docId = `${formattedDate}-${areaCode}`;
-
-  await db
-    .collection("weather_data")
-    .doc(docId)
-    .set({
-      areaCode: areaCode,
-      weatherForecasts: JSON.stringify({ test: "data" }),
-      generatedMessage: `これはテスト用の天気予報です。地域コード: ${areaCode}`,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-  return docId;
-}
-
-async function cleanupTestData(userIds, weatherIds) {
-  const db = admin.firestore();
-  const batch = db.batch();
-
-  // ユーザーの削除
-  userIds.forEach((userId) => {
-    batch.delete(db.collection("users").doc(userId));
-  });
-
-  // 天気情報の削除
-  weatherIds.forEach((weatherId) => {
-    batch.delete(db.collection("weather_data").doc(weatherId));
-  });
-
-  await batch.commit();
-}
+);
