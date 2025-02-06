@@ -69,12 +69,7 @@ const withRetry = async (operation) => {
   }
 };
 
-async function getGeminiResponse(prompt) {
-  logger.debug("Gemini APIリクエストを開始", {
-    model: VERTEX_AI_CONFIG.MODEL,
-    promptLength: prompt.length,
-  });
-
+async function generateContent(prompt, schema = null) {
   const vertexAI = new VertexAI({
     project: projectId,
     location: VERTEX_AI_CONFIG.LOCATION,
@@ -84,59 +79,26 @@ async function getGeminiResponse(prompt) {
     model: VERTEX_AI_CONFIG.MODEL,
   });
 
-  const response_schema = {
-    type: "object",
-    properties: {
-      mother_message: { type: "string" },
-    },
-    required: ["mother_message"],
+  const request = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generation_config: schema
+      ? {
+          responseMimeType: "application/json",
+          responseSchema: schema,
+        }
+      : undefined,
   };
 
-  let response;
-  let rawResponse;
-
   try {
-    const request = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      generation_config: {
-        responseMimeType: "application/json",
-        responseSchema: response_schema,
-      },
-    };
-
-    // リトライ機能を使用してAPIリクエストを実行
-    response = await withRetry(async () => {
+    const response = await withRetry(async () => {
       return await generativeModel.generateContent(request);
     });
 
     const result = await response.response;
-    rawResponse = result.candidates[0].content.parts[0].text;
-    const jsonResponse = JSON.parse(rawResponse);
-
-    logger.info("Gemini APIからレスポンスを受信", {
-      responseLength: jsonResponse.mother_message.length,
-    });
-
-    return jsonResponse.mother_message;
+    return result.candidates[0].content.parts[0].text;
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      logger.error("Gemini APIのレスポンスのJSONパースに失敗", error, {
-        rawResponse,
-        promptLength: prompt.length,
-      });
-    } else {
-      logger.error("Gemini APIでエラーが発生", error, {
-        promptLength: prompt.length,
-        responseStatus: response?.status,
-      });
-    }
-    throw error;
+    throw new Error(`Gemini APIでエラーが発生: ${error.message}`);
   }
 }
 
-module.exports = { getGeminiResponse };
+module.exports = { generateContent };

@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+const { getFirestore } = require("firebase-admin/firestore");
 const { COLLECTION_NAME } = require("../config/constants");
 const logger = require("../utils/logger");
 
@@ -9,6 +9,16 @@ if (!admin.apps.length) {
 }
 
 const db = getFirestore();
+
+async function saveDocument(collection, documentId, data) {
+  try {
+    const docRef = db.collection(collection).doc(documentId);
+    await docRef.set(data);
+    return true;
+  } catch (error) {
+    throw new Error(`Firestoreへの書き込みに失敗: ${error.message}`);
+  }
+}
 
 async function saveWeatherData({
   documentId,
@@ -49,4 +59,4 @@ async function saveWeatherData({
   }
 }
 
-module.exports = { saveWeatherData };
+module.exports = { saveDocument, saveWeatherData };
