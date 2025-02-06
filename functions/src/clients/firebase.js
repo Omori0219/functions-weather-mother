@@ -3,6 +3,14 @@ const { getFirestore } = require("firebase-admin/firestore");
 const { COLLECTION_NAME } = require("../config/constants");
 const logger = require("../utils/logger");
 
+const FirestoreError = class extends Error {
+  constructor(type, message, originalError = null) {
+    super(message);
+    this.name = "FirestoreError";
+    this.type = type;
+  }
+};
+
 // Firebase Admin の初期化（多重初期化を防ぐ）
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -16,7 +24,13 @@ async function saveDocument(collection, documentId, data) {
     await docRef.set(data);
     return true;
   } catch (error) {
-    throw new Error(`Firestoreへの書き込みに失敗: ${error.message}`);
+    if (error.code === "permission-denied") {
+      throw new FirestoreError("auth", "Firestoreへのアクセス権限がありません", error);
+    }
+    if (error.code === "not-found") {
+      throw new FirestoreError("not_found", "指定されたドキュメントが見つかりません", error);
+    }
+    throw new FirestoreError("unknown", "Firestoreへの書き込みに失敗", error);
   }
 }
 
