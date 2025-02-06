@@ -92,6 +92,9 @@ async function getGeminiResponse(prompt) {
     required: ["mother_message"],
   };
 
+  let response;
+  let rawResponse;
+
   try {
     const request = {
       contents: [
@@ -107,12 +110,13 @@ async function getGeminiResponse(prompt) {
     };
 
     // リトライ機能を使用してAPIリクエストを実行
-    const response = await withRetry(async () => {
+    response = await withRetry(async () => {
       return await generativeModel.generateContent(request);
     });
 
     const result = await response.response;
-    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+    rawResponse = result.candidates[0].content.parts[0].text;
+    const jsonResponse = JSON.parse(rawResponse);
 
     logger.info("Gemini APIからレスポンスを受信", {
       responseLength: jsonResponse.mother_message.length,
@@ -122,11 +126,13 @@ async function getGeminiResponse(prompt) {
   } catch (error) {
     if (error instanceof SyntaxError) {
       logger.error("Gemini APIのレスポンスのJSONパースに失敗", error, {
-        rawResponse: result?.candidates[0]?.content?.parts[0]?.text,
+        rawResponse,
+        promptLength: prompt.length,
       });
     } else {
       logger.error("Gemini APIでエラーが発生", error, {
         promptLength: prompt.length,
+        responseStatus: response?.status,
       });
     }
     throw error;
