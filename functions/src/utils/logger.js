@@ -48,7 +48,7 @@ const logger = {
       JSON.stringify({
         level: "ERROR",
         message,
-        error: error?.stack || error?.message,
+        errorStack: error?.stack || error?.message,
         ...meta,
         timestamp: new Date().toISOString(),
       })
