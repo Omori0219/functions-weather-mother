@@ -2,7 +2,7 @@
   "name": "weathermother",
   "version": "1.0.0",
   "scripts": {
-    "start": "node src/core/weather/weather-mother.js",
+    "start": "node src/core/weather/weatherService.js",
     "batch": "node src/core/weather/batch-processor.js",
     "lint": "eslint src/",
     "format": "prettier --write src/"
