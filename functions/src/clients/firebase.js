@@ -1,7 +1,16 @@
 const admin = require("firebase-admin");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
-const { COLLECTION_NAME } = require("../config/constants");
-const logger = require("../utils/logger");
+
+const FirestoreError = class extends Error {
+  constructor(type, message, originalError = null) {
+    super(message);
+    this.name = "FirestoreError";
+    this.type = type;
+    if (originalError) {
+      this.cause = originalError;
+    }
+  }
+};
 
 // Firebase Admin の初期化（多重初期化を防ぐ）
 if (!admin.apps.length) {
@@ -10,43 +19,36 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
-async function saveWeatherData({
-  documentId,
-  areaCode,
-  weatherForecasts,
-  generatedMessage,
-  createdAt,
-}) {
+/**
+ * JavaScriptのDateオブジェクトをFirestore Timestampに変換
+ * @param {Object} data - 変換対象のデータオブジェクト
+ * @returns {Object} Timestamp型に変換されたデータオブジェクト
+ */
+function convertDatesToTimestamps(data) {
+  const converted = { ...data };
+  for (const [key, value] of Object.entries(converted)) {
+    if (value instanceof Date) {
+      converted[key] = Timestamp.fromDate(value);
+    }
+  }
+  return converted;
+}
+
+async function saveDocument(collection, documentId, data) {
   try {
-    // デバッグ: createdAtの型と値を確認
-    logger.debug("Saving weather data", {
-      documentId,
-      areaCode,
-      createdAtType: typeof createdAt,
-      createdAtValue: createdAt,
-    });
-
-    const docRef = db.collection(COLLECTION_NAME).doc(documentId);
-
-    await docRef.set({
-      areaCode,
-      weatherForecasts,
-      generatedMessage,
-      createdAt: Timestamp.fromDate(createdAt),
-    });
-
-    logger.info("天気予報データの保存に成功しました", {
-      documentId,
-      areaCode,
-    });
-    return true;
+    const docRef = db.collection(collection).doc(documentId);
+    const convertedData = convertDatesToTimestamps(data);
+    await docRef.set(convertedData);
+    return { success: true, docRef };
   } catch (error) {
-    logger.error("Firestoreへの書き込みに失敗しました", error, {
-      documentId,
-      areaCode,
-    });
-    throw error;
+    if (error.code === "permission-denied") {
+      throw new FirestoreError("auth", "Firestoreへのアクセス権限がありません", error);
+    }
+    if (error.code === "not-found") {
+      throw new FirestoreError("not_found", "指定されたドキュメントが見つかりません", error);
+    }
+    throw new FirestoreError("unknown", "Firestoreへの書き込みに失敗", error);
   }
 }
 
-module.exports = { saveWeatherData };
+module.exports = { saveDocument };

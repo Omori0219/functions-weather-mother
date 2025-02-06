@@ -2,6 +2,14 @@ const { VertexAI } = require("@google-cloud/vertexai");
 const { GoogleAuth } = require("google-auth-library");
 const logger = require("../utils/logger");
 
+const AIAPIError = class extends Error {
+  constructor(type, message, originalError = null) {
+    super(message);
+    this.name = "AIAPIError";
+    this.type = type;
+  }
+};
+
 // Vertex AI の設定
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 const VERTEX_AI_CONFIG = {
@@ -69,12 +77,7 @@ const withRetry = async (operation) => {
   }
 };
 
-async function getGeminiResponse(prompt) {
-  logger.debug("Gemini APIリクエストを開始", {
-    model: VERTEX_AI_CONFIG.MODEL,
-    promptLength: prompt.length,
-  });
-
+async function generateContent(prompt, schema = null) {
   const vertexAI = new VertexAI({
     project: projectId,
     location: VERTEX_AI_CONFIG.LOCATION,
@@ -84,59 +87,35 @@ async function getGeminiResponse(prompt) {
     model: VERTEX_AI_CONFIG.MODEL,
   });
 
-  const response_schema = {
-    type: "object",
-    properties: {
-      mother_message: { type: "string" },
-    },
-    required: ["mother_message"],
+  const request = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generation_config: schema
+      ? {
+          responseMimeType: "application/json",
+          responseSchema: schema,
+        }
+      : undefined,
   };
 
-  let response;
-  let rawResponse;
-
   try {
-    const request = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      generation_config: {
-        responseMimeType: "application/json",
-        responseSchema: response_schema,
-      },
-    };
-
-    // リトライ機能を使用してAPIリクエストを実行
-    response = await withRetry(async () => {
+    const response = await withRetry(async () => {
       return await generativeModel.generateContent(request);
     });
 
     const result = await response.response;
-    rawResponse = result.candidates[0].content.parts[0].text;
-    const jsonResponse = JSON.parse(rawResponse);
-
-    logger.info("Gemini APIからレスポンスを受信", {
-      responseLength: jsonResponse.mother_message.length,
-    });
-
-    return jsonResponse.mother_message;
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      logger.error("Gemini APIのレスポンスのJSONパースに失敗", error, {
-        rawResponse,
-        promptLength: prompt.length,
-      });
-    } else {
-      logger.error("Gemini APIでエラーが発生", error, {
-        promptLength: prompt.length,
-        responseStatus: response?.status,
-      });
+    if (!result?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new AIAPIError("invalid_response", "Gemini APIから不正なレスポンス形式を受信");
     }
-    throw error;
+    return result.candidates[0].content.parts[0].text;
+  } catch (error) {
+    if (error instanceof AIAPIError) {
+      throw error;
+    }
+    if (error?.code === 429) {
+      throw new AIAPIError("rate_limit", "APIレート制限を超過", error);
+    }
+    throw new AIAPIError("unknown", "Gemini APIでエラーが発生", error);
   }
 }
 
-module.exports = { getGeminiResponse };
+module.exports = { generateContent };
