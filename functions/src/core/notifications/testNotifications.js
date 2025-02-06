@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 const { sendPushNotification } = require("./notification");
 const logger = require("../utils/logger");
+const { sendNotificationsToAllUsers } = require("./sendNotifications");
 
 /**
  * テスト用の天気情報を作成
@@ -261,7 +262,6 @@ const testRealWeatherNotification = async () => {
     logger.info("実際の天気情報を使用した通知テストを開始");
 
     // 通知送信
-    const { sendNotificationsToAllUsers } = require("./sendNotifications");
     await sendNotificationsToAllUsers();
 
     logger.info("実際の天気情報を使用した通知テストが完了");

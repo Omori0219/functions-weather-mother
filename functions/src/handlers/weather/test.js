@@ -1,5 +1,5 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { processPrefectures } = require("../../core/batch-processor");
+const { processPrefectures } = require("../../core/weather/batch-processor");
 const { PREFECTURE_CODES } = require("../../config/prefectures");
 const logger = require("../../utils/logger");
 
