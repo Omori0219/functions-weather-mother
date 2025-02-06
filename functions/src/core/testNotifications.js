@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const { sendPushNotification } = require("./notification");
+const logger = require("../utils/logger");
 
 /**
  * テスト用の天気情報を作成
@@ -12,6 +13,12 @@ const createTestWeatherData = async (areaCode) => {
   const formattedDate = today.toISOString().split("T")[0].replace(/-/g, "");
   const docId = `${formattedDate}-${areaCode}`;
 
+  logger.debug("テスト用の天気情報を作成", {
+    areaCode,
+    docId,
+    timestamp: today.toISOString(),
+  });
+
   await db
     .collection("weather_data")
     .doc(docId)
@@ -22,6 +29,11 @@ const createTestWeatherData = async (areaCode) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+  logger.info("テスト用の天気情報を作成完了", {
+    areaCode,
+    docId,
+  });
+
   return docId;
 };
 
@@ -31,12 +43,23 @@ const createTestWeatherData = async (areaCode) => {
  * @returns {Promise<string>} - ユーザーID
  */
 const createTestUser = async (userData) => {
+  logger.debug("テスト用のユーザーを作成", {
+    areaCode: userData.areaCode,
+    isPushEnabled: userData.isPushNotificationEnabled,
+  });
+
   const db = admin.firestore();
   const userRef = await db.collection("users").add({
     ...userData,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
+
+  logger.info("テスト用のユーザーを作成完了", {
+    userId: userRef.id,
+    areaCode: userData.areaCode,
+  });
+
   return userRef.id;
 };
 
@@ -46,6 +69,11 @@ const createTestUser = async (userData) => {
  * @param {string[]} weatherIds - 削除する天気情報ID配列
  */
 const cleanupTestData = async (userIds, weatherIds) => {
+  logger.debug("テストデータのクリーンアップを開始", {
+    userCount: userIds.length,
+    weatherDataCount: weatherIds.length,
+  });
+
   const db = admin.firestore();
   const batch = db.batch();
 
@@ -60,6 +88,11 @@ const cleanupTestData = async (userIds, weatherIds) => {
   });
 
   await batch.commit();
+
+  logger.info("テストデータのクリーンアップ完了", {
+    deletedUsers: userIds.length,
+    deletedWeatherData: weatherIds.length,
+  });
 };
 
 /**
@@ -68,6 +101,10 @@ const cleanupTestData = async (userIds, weatherIds) => {
  */
 const testBasicNotification = async (expoPushToken) => {
   try {
+    logger.info("基本的な正常系のテストを開始", {
+      expoPushToken: expoPushToken.substring(0, 10) + "...",
+    });
+
     // テストユーザーの作成
     const userId = await createTestUser({
       areaCode: "130000", // 東京
@@ -84,11 +121,16 @@ const testBasicNotification = async (expoPushToken) => {
     // テストデータのクリーンアップ
     await cleanupTestData([userId], [weatherId]);
 
+    logger.info("基本的な正常系のテストが完了");
+
     return {
       success: true,
       message: "基本的な正常系のテストが完了しました",
     };
   } catch (error) {
+    logger.error("基本的な正常系のテストが失敗", error, {
+      expoPushToken: expoPushToken.substring(0, 10) + "...",
+    });
     throw new Error(`基本的な正常系のテストが失敗しました: ${error.message}`);
   }
 };
@@ -99,6 +141,10 @@ const testBasicNotification = async (expoPushToken) => {
  */
 const testMissingWeatherData = async (expoPushToken) => {
   try {
+    logger.info("天気情報未生成のテストを開始", {
+      expoPushToken: expoPushToken.substring(0, 10) + "...",
+    });
+
     // テストユーザーの作成（天気情報は作成しない）
     const userId = await createTestUser({
       areaCode: "130000",
@@ -114,17 +160,24 @@ const testMissingWeatherData = async (expoPushToken) => {
     const weatherDoc = await db.collection("weather_data").doc(weatherDocId).get();
 
     if (!weatherDoc.exists) {
-      console.log("期待通り、天気情報が存在しません");
+      logger.info("天気情報が存在しないことを確認", {
+        weatherDocId,
+      });
     }
 
     // テストデータのクリーンアップ
     await cleanupTestData([userId], []);
+
+    logger.info("天気情報未生成のテストが完了");
 
     return {
       success: true,
       message: "天気情報未生成のテストが完了しました",
     };
   } catch (error) {
+    logger.error("天気情報未生成のテストが失敗", error, {
+      expoPushToken: expoPushToken.substring(0, 10) + "...",
+    });
     throw new Error(`天気情報未生成のテストが失敗しました: ${error.message}`);
   }
 };
@@ -139,6 +192,11 @@ const testMultipleUsers = async (expoPushTokens) => {
   const areaCodes = ["130000", "270000", "016000"]; // 東京、大阪、札幌
 
   try {
+    logger.info("複数ユーザーへの一斉送信テストを開始", {
+      userCount: expoPushTokens.length,
+      areaCodes,
+    });
+
     // テストユーザーと天気情報の作成
     for (let i = 0; i < Math.min(expoPushTokens.length, areaCodes.length); i++) {
       const userId = await createTestUser({
@@ -154,6 +212,12 @@ const testMultipleUsers = async (expoPushTokens) => {
 
     // 各ユーザーに通知を送信
     for (let i = 0; i < userIds.length; i++) {
+      logger.debug("テスト通知を送信", {
+        userId: userIds[i],
+        areaCode: areaCodes[i],
+        tokenPreview: expoPushTokens[i].substring(0, 10) + "...",
+      });
+
       await sendPushNotification(
         expoPushTokens[i],
         `これはテスト用の天気予報です。地域コード: ${areaCodes[i]}`
@@ -162,6 +226,11 @@ const testMultipleUsers = async (expoPushTokens) => {
 
     // テストデータのクリーンアップ
     await cleanupTestData(userIds, weatherIds);
+
+    logger.info("複数ユーザーへの一斉送信テストが完了", {
+      testedUsers: userIds.length,
+      testedAreas: areaCodes.slice(0, userIds.length),
+    });
 
     return {
       success: true,
@@ -172,6 +241,11 @@ const testMultipleUsers = async (expoPushTokens) => {
       },
     };
   } catch (error) {
+    logger.error("複数ユーザーへの一斉送信テストが失敗", error, {
+      userCount: expoPushTokens.length,
+      completedUsers: userIds.length,
+    });
+
     // エラー時もクリーンアップを実行
     await cleanupTestData(userIds, weatherIds);
     throw new Error(`複数ユーザーへの一斉送信テストが失敗しました: ${error.message}`);
@@ -184,15 +258,20 @@ const testMultipleUsers = async (expoPushTokens) => {
  */
 const testRealWeatherNotification = async () => {
   try {
+    logger.info("実際の天気情報を使用した通知テストを開始");
+
     // 通知送信
     const { sendNotificationsToAllUsers } = require("./sendNotifications");
     await sendNotificationsToAllUsers();
+
+    logger.info("実際の天気情報を使用した通知テストが完了");
 
     return {
       success: true,
       message: "実際の天気情報を使用した通知テストが完了しました",
     };
   } catch (error) {
+    logger.error("実際の天気情報を使用した通知テストが失敗", error);
     throw new Error(`実際の天気情報を使用した通知テストが失敗しました: ${error.message}`);
   }
 };
