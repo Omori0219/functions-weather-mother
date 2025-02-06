@@ -68,7 +68,7 @@ async function processPrefectures(prefectures) {
 
     // バッチの結果を集計
     batchResults.forEach((result) => {
-      if (result.value?.success) {
+      if (result.status === "fulfilled" && result.value.success) {
         successCount++;
       } else {
         failureCount++;
