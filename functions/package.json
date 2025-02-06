@@ -8,7 +8,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "test": "node src/core/batch-processor.js",
-    "test:single": "node -e \"require('./src/core/weather-mother.js').processWeatherData('130000')\""
+    "test:single": "node -e \"require('./src/core/weather/weather-mother.js').processWeatherData('130000')\""
   },
   "engines": {
     "node": "22"

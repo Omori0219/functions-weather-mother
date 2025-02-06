@@ -1,5 +1,5 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { processWeatherData } = require("../../core/weather-mother");
+const { processWeatherData } = require("../../core/weather/weather-mother");
 const { PREFECTURE_CODES } = require("../../config/prefectures");
 const logger = require("../../utils/logger");
 

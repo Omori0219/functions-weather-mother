@@ -1,5 +1,5 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { sendNotificationsToAllUsers } = require("../../core/sendNotifications");
+const { sendNotificationsToAllUsers } = require("../../core/notifications/sendNotifications");
 const logger = require("../../utils/logger");
 
 // 毎朝7時にプッシュ通知を送信

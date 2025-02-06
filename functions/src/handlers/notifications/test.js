@@ -4,7 +4,7 @@ const {
   testMissingWeatherData,
   testMultipleUsers,
   testRealWeatherNotification,
-} = require("../../core/testNotifications");
+} = require("../../core/notifications/testNotifications");
 const logger = require("../../utils/logger");
 
 // プッシュ通知のテスト用エンドポイント
