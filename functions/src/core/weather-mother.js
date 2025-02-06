@@ -8,6 +8,7 @@ const logger = require("../utils/logger");
 
 async function processWeatherData(areaCode) {
   try {
+    const startTime = Date.now();
     logger.debug("天気予報データの処理を開始", {
       areaCode,
       timestamp: new Date().toISOString(),
@@ -43,10 +44,14 @@ async function processWeatherData(areaCode) {
       createdAt: now,
     });
 
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+
     logger.info("天気予報データの処理が完了", {
       areaCode,
       documentId,
-      processingTime: Date.now() - now.getTime(),
+      processingTimeMs: processingTime,
+      processingTimeSeconds: (processingTime / 1000).toFixed(3),
     });
 
     return { weatherData, motherMessage };
