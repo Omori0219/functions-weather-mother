@@ -1,3 +1,8 @@
+// 開発環境での環境変数の読み込み
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
 /**
  * Import function triggers from their respective submodules:
  *

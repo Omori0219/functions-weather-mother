@@ -1,7 +1,113 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { processWeatherData } = require("../../core/weather/weather-mother");
 const { PREFECTURE_CODES } = require("../../config/prefectures");
 const logger = require("../../utils/logger");
+const { processWeatherForArea } = require("../../core/weather/weatherService");
+
+// バッチ処理の実装
+async function processPrefectures(prefectures) {
+  logger.info("バッチ処理を開始", {
+    totalPrefectures: prefectures.length,
+    batchSize: 5,
+    batchInterval: "30秒",
+  });
+
+  const startTime = Date.now();
+  let successCount = 0;
+  let failureCount = 0;
+
+  // 都道府県をバッチに分割して処理
+  const BATCH_SIZE = 5; // 一度に処理する都道府県の数
+  const BATCH_INTERVAL = 30000; // バッチ間の待機時間（30秒）
+
+  const results = {
+    success: [],
+    failed: [],
+  };
+
+  for (let i = 0; i < prefectures.length; i += BATCH_SIZE) {
+    const batch = prefectures.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(prefectures.length / BATCH_SIZE);
+
+    logger.debug("バッチ処理を開始", {
+      batchNumber,
+      totalBatches,
+      startIndex: i + 1,
+      endIndex: Math.min(i + BATCH_SIZE, prefectures.length),
+      prefecturesInBatch: batch.map((p) => p.name),
+    });
+
+    // バッチ内の都道府県を並行処理
+    const batchResults = await Promise.allSettled(
+      batch.map(async (prefecture) => {
+        try {
+          logger.debug("都道府県の処理を開始", {
+            prefecture: prefecture.name,
+            code: prefecture.code,
+          });
+
+          const result = await processWeatherForArea(prefecture.code);
+          results.success.push({
+            prefecture: prefecture.name,
+            code: prefecture.code,
+            message: result.message,
+          });
+          logger.info(`${prefecture.name}の処理が完了しました！`);
+          return { success: true };
+        } catch (error) {
+          results.failed.push({
+            prefecture: prefecture.name,
+            code: prefecture.code,
+            error: error.message,
+          });
+          logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
+          return { success: false, error };
+        }
+      })
+    );
+
+    // バッチの結果を集計
+    batchResults.forEach((result) => {
+      if (result.value?.success) {
+        successCount++;
+      } else {
+        failureCount++;
+      }
+    });
+
+    // 次のバッチの前に待機（最後のバッチ以外）
+    if (i + BATCH_SIZE < prefectures.length) {
+      logger.debug("次のバッチ処理までの待機", {
+        waitTimeSeconds: BATCH_INTERVAL / 1000,
+        nextBatchNumber: batchNumber + 1,
+      });
+      await new Promise((resolve) => setTimeout(resolve, BATCH_INTERVAL));
+    }
+  }
+
+  const endTime = Date.now();
+  const processingTime = ((endTime - startTime) / 1000).toFixed(3);
+
+  logger.info("バッチ処理が完了", {
+    successCount,
+    failureCount,
+    processingTimeSeconds: Number(processingTime),
+    startTime: new Date(startTime).toISOString(),
+    endTime: new Date(endTime).toISOString(),
+  });
+
+  return {
+    status: "completed",
+    timestamp: new Date().toISOString(),
+    summary: {
+      total: prefectures.length,
+      success: results.success.length,
+      failed: results.failed.length,
+    },
+    results: results,
+    processingTime: Number(processingTime),
+  };
+}
 
 // 毎朝6時に実行
 exports.generateWeatherMessages = onSchedule(
@@ -19,47 +125,9 @@ exports.generateWeatherMessages = onSchedule(
     logger.info("==== バッチ処理開始 ====");
 
     try {
-      const results = {
-        success: [],
-        failed: [],
-      };
-
-      // 全都道府県を処理
-      for (const prefecture of PREFECTURE_CODES) {
-        logger.info(`${prefecture.name}の処理を開始...`);
-        try {
-          const result = await processWeatherData(prefecture.code);
-          results.success.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            message: result.motherMessage,
-          });
-          logger.info(`${prefecture.name}の処理が完了しました！`);
-        } catch (error) {
-          results.failed.push({
-            prefecture: prefecture.name,
-            code: prefecture.code,
-            error: error.message,
-          });
-          logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
-        }
-      }
-
-      logger.info("==== バッチ処理完了 ====");
-
-      const executionResult = {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        summary: {
-          total: PREFECTURE_CODES.length,
-          success: results.success.length,
-          failed: results.failed.length,
-        },
-        results: results,
-      };
-
-      logger.info("実行結果", executionResult);
-      return executionResult;
+      const result = await processPrefectures(PREFECTURE_CODES);
+      logger.info("実行結果", result);
+      return result;
     } catch (error) {
       const errorResult = {
         status: "error",
@@ -71,3 +139,6 @@ exports.generateWeatherMessages = onSchedule(
     }
   }
 );
+
+// テスト用にエクスポート
+exports.processPrefectures = processPrefectures;
