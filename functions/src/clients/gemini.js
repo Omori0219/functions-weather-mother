@@ -2,6 +2,14 @@ const { VertexAI } = require("@google-cloud/vertexai");
 const { GoogleAuth } = require("google-auth-library");
 const logger = require("../utils/logger");
 
+const AIAPIError = class extends Error {
+  constructor(type, message, originalError = null) {
+    super(message);
+    this.name = "AIAPIError";
+    this.type = type;
+  }
+};
+
 // Vertex AI の設定
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 const VERTEX_AI_CONFIG = {
@@ -95,9 +103,18 @@ async function generateContent(prompt, schema = null) {
     });
 
     const result = await response.response;
+    if (!result?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new AIAPIError("invalid_response", "Gemini APIから不正なレスポンス形式を受信");
+    }
     return result.candidates[0].content.parts[0].text;
   } catch (error) {
-    throw new Error(`Gemini APIでエラーが発生: ${error.message}`);
+    if (error instanceof AIAPIError) {
+      throw error;
+    }
+    if (error?.code === 429) {
+      throw new AIAPIError("rate_limit", "APIレート制限を超過", error);
+    }
+    throw new AIAPIError("unknown", "Gemini APIでエラーが発生", error);
   }
 }
 
