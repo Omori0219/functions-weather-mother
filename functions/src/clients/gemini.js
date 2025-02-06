@@ -32,7 +32,11 @@ const throttleRequest = async () => {
 
   if (timeSinceLastRequest < minRequestInterval) {
     const waitTime = minRequestInterval - timeSinceLastRequest;
-    logger.info(`APIレート制限のため${(waitTime / 1000).toFixed(3)}秒待機します...`);
+    logger.debug("APIレート制限による待機", {
+      waitTimeSeconds: (waitTime / 1000).toFixed(3),
+      lastRequestTime,
+      currentTime: now,
+    });
     await sleep(waitTime);
   }
 
@@ -51,9 +55,11 @@ const withRetry = async (operation) => {
     } catch (error) {
       if (error?.code === 429 && retryCount < MAX_RETRIES) {
         retryCount++;
-        logger.info(
-          `レート制限エラー。${delay / 1000}秒後に${retryCount}回目のリトライを行います...`
-        );
+        logger.info("レート制限によるリトライ", {
+          retryCount,
+          delaySeconds: delay / 1000,
+          maxRetries: MAX_RETRIES,
+        });
         await sleep(delay);
         delay = Math.min(delay * 2, MAX_RETRY_DELAY);
         continue;
@@ -64,6 +70,11 @@ const withRetry = async (operation) => {
 };
 
 async function getGeminiResponse(prompt) {
+  logger.debug("Gemini APIリクエストを開始", {
+    model: VERTEX_AI_CONFIG.MODEL,
+    promptLength: prompt.length,
+  });
+
   const vertexAI = new VertexAI({
     project: projectId,
     location: VERTEX_AI_CONFIG.LOCATION,
@@ -103,14 +114,20 @@ async function getGeminiResponse(prompt) {
     const result = await response.response;
     const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
 
+    logger.info("Gemini APIからレスポンスを受信", {
+      responseLength: jsonResponse.mother_message.length,
+    });
+
     return jsonResponse.mother_message;
   } catch (error) {
-    logger.error("Gemini API error", error);
     if (error instanceof SyntaxError) {
-      logger.error(
-        "JSON parsing failed. Raw response:",
-        result?.candidates[0]?.content?.parts[0]?.text
-      );
+      logger.error("Gemini APIのレスポンスのJSONパースに失敗", error, {
+        rawResponse: result?.candidates[0]?.content?.parts[0]?.text,
+      });
+    } else {
+      logger.error("Gemini APIでエラーが発生", error, {
+        promptLength: prompt.length,
+      });
     }
     throw error;
   }

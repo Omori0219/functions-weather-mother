@@ -48,6 +48,9 @@ npm install
 \`functions/.env\`ファイルを作成し、以下の環境変数を設定：
 ```env
 GOOGLE_CLOUD_PROJECT_ID=your-project-id
+
+# アプリケーション環境設定
+NODE_ENV=development  # 開発時のみ設定。本番環境では設定不要
 ```
 
 ### ローカル開発環境の構築
@@ -169,6 +172,40 @@ firebase deploy --only functions
 2. Cloud Logging > Logs Explorer
 3. ローカルでのログ確認: `firebase functions:log`
 
+#### ログレベル
+アプリケーションは以下の3つのログレベルを使用します：
+
+- **DEBUG**: 詳細なデバッグ情報（開発環境のみ）
+  - API呼び出しの詳細
+  - 処理の中間状態
+  - パフォーマンス関連の情報
+
+- **INFO**: 通常の操作ログ（全環境）
+  - 処理の開始・完了
+  - 重要なイベント
+  - 操作の結果
+
+- **ERROR**: エラー情報（全環境）
+  - 例外やエラーの詳細
+  - スタックトレース
+  - 失敗した操作の情報
+
+#### ログの環境設定
+- 開発環境（`NODE_ENV=development`）: 全てのログレベル（DEBUG, INFO, ERROR）を出力
+- 本番環境（デフォルト）: INFO, ERRORレベルのみ出力
+
+#### ログの形式
+```json
+{
+  "level": "INFO",
+  "message": "処理メッセージ",
+  "env": "development|production",
+  "timestamp": "2024-03-20T10:30:00.000Z",
+  // 追加のメタデータ
+  "additionalData": "..."
+}
+```
+
 ### アラート設定
 Cloud Monitoringで以下のアラートを設定：
 - 関数の実行エラー
@@ -205,6 +242,12 @@ MIT License (c) 2024
 - 初期リリース
 - 基本機能の実装
 - 東京リージョンでの運用開始
+
+### v1.1.0 (2024-03-20)
+- ログ出力機能の強化
+  - 構造化ログの導入
+  - 環境別ログレベルの制御機能追加
+  - ログフォーマットの統一
 
 ### 今後の予定
 - パフォーマンス最適化

@@ -9,9 +9,13 @@ const logger = require("../utils/logger");
  * @returns {Promise<{ successCount: number, failureCount: number, processingTime: number }>}
  */
 async function processPrefectures(prefectures) {
-  logger.info("==== バッチ処理開始 ====");
-  const startTime = Date.now();
+  logger.info("バッチ処理を開始", {
+    totalPrefectures: prefectures.length,
+    batchSize: 5,
+    batchInterval: "30秒",
+  });
 
+  const startTime = Date.now();
   let successCount = 0;
   let failureCount = 0;
 
@@ -21,18 +25,40 @@ async function processPrefectures(prefectures) {
 
   for (let i = 0; i < prefectures.length; i += BATCH_SIZE) {
     const batch = prefectures.slice(i, i + BATCH_SIZE);
-    logger.info(`バッチ処理開始 (${i + 1}～${Math.min(i + BATCH_SIZE, prefectures.length)}件目)`);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(prefectures.length / BATCH_SIZE);
+
+    logger.debug("バッチ処理を開始", {
+      batchNumber,
+      totalBatches,
+      startIndex: i + 1,
+      endIndex: Math.min(i + BATCH_SIZE, prefectures.length),
+      prefecturesInBatch: batch.map((p) => p.name),
+    });
 
     // バッチ内の都道府県を並行処理
     const batchResults = await Promise.allSettled(
       batch.map(async (prefecture) => {
         try {
-          logger.info(`${prefecture.name}の処理を開始...`);
+          logger.debug("都道府県の処理を開始", {
+            prefecture: prefecture.name,
+            code: prefecture.code,
+          });
+
           await processWeatherData(prefecture.code);
-          logger.info(`${prefecture.name}の処理が完了しました！`);
+
+          logger.info("都道府県の処理が完了", {
+            prefecture: prefecture.name,
+            code: prefecture.code,
+            status: "success",
+          });
+
           return { success: true };
         } catch (error) {
-          logger.error(`${prefecture.name}の処理中にエラーが発生しました:`, error);
+          logger.error("都道府県の処理中にエラーが発生", error, {
+            prefecture: prefecture.name,
+            code: prefecture.code,
+          });
           return { success: false, error };
         }
       })
@@ -49,7 +75,10 @@ async function processPrefectures(prefectures) {
 
     // 次のバッチの前に待機（最後のバッチ以外）
     if (i + BATCH_SIZE < prefectures.length) {
-      logger.info(`次のバッチの前に${BATCH_INTERVAL / 1000}秒待機します...`);
+      logger.debug("次のバッチ処理までの待機", {
+        waitTimeSeconds: BATCH_INTERVAL / 1000,
+        nextBatchNumber: batchNumber + 1,
+      });
       await new Promise((resolve) => setTimeout(resolve, BATCH_INTERVAL));
     }
   }
@@ -57,10 +86,13 @@ async function processPrefectures(prefectures) {
   const endTime = Date.now();
   const processingTime = ((endTime - startTime) / 1000).toFixed(3);
 
-  logger.info("==== バッチ処理完了 ====");
-  logger.info(`成功: ${successCount}件`);
-  logger.info(`失敗: ${failureCount}件`);
-  logger.info(`処理時間: ${processingTime}秒`);
+  logger.info("バッチ処理が完了", {
+    successCount,
+    failureCount,
+    processingTimeSeconds: Number(processingTime),
+    startTime: new Date(startTime).toISOString(),
+    endTime: new Date(endTime).toISOString(),
+  });
 
   return {
     successCount,
@@ -74,7 +106,9 @@ async function processAllPrefectures() {
     const results = await processPrefectures(PREFECTURE_CODES);
     return results;
   } catch (error) {
-    logger.error("バッチ処理でエラーが発生しました:", error);
+    logger.error("バッチ処理全体でエラーが発生", error, {
+      totalPrefectures: PREFECTURE_CODES.length,
+    });
     throw error;
   }
 }
@@ -85,7 +119,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      logger.error("実行エラー:", error);
+      logger.error("バッチ処理のメイン実行でエラーが発生", error);
       process.exit(1);
     });
 }
