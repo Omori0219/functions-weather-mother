@@ -1,11 +1,14 @@
 const admin = require("firebase-admin");
-const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+const { getFirestore } = require("firebase-admin/firestore");
 
 const FirestoreError = class extends Error {
   constructor(type, message, originalError = null) {
     super(message);
     this.name = "FirestoreError";
     this.type = type;
+    if (originalError) {
+      this.cause = originalError;
+    }
   }
 };
 
@@ -20,7 +23,7 @@ async function saveDocument(collection, documentId, data) {
   try {
     const docRef = db.collection(collection).doc(documentId);
     await docRef.set(data);
-    return true;
+    return { success: true, docRef };
   } catch (error) {
     if (error.code === "permission-denied") {
       throw new FirestoreError("auth", "Firestoreへのアクセス権限がありません", error);
