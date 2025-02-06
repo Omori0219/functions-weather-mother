@@ -1,7 +1,5 @@
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const { COLLECTION_NAME } = require("../config/constants");
-const logger = require("../utils/logger");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 
 const FirestoreError = class extends Error {
   constructor(type, message, originalError = null) {
