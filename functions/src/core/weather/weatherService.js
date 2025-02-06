@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const { fetchWeatherData } = require("./services/fetchWeatherData");
 const { generateMessage } = require("./services/generateMessage");
 const { storeMessage } = require("./services/storeMessage");

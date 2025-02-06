@@ -7,8 +7,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "node -e \"require('./src/handlers/weather/index.js').processPrefectures(require('./src/config/prefectures.js').PREFECTURE_CODES)\"",
-    "test:single": "node src/core/weather/weatherService.js"
+    "test": "node -r ./src/test/setup.js src/handlers/weather/index.js",
+    "test:single": "node -r ./src/test/setup.js src/core/weather/weatherService.js"
   },
   "engines": {
     "node": "22"
