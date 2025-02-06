@@ -1,7 +1,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { processPrefectures } = require("../../core/weather/batch-processor");
 const { PREFECTURE_CODES } = require("../../config/prefectures");
 const logger = require("../../utils/logger");
+const { processPrefectures } = require("./index");
 
 // テスト用の関数
 exports.generateWeatherMessagesTest = onRequest(
@@ -20,23 +20,9 @@ exports.generateWeatherMessagesTest = onRequest(
         ["016000", "130000", "270000", "471000"].includes(p.code)
       );
 
-      const results = await processPrefectures(testPrefectures);
-
-      const executionResult = {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        summary: {
-          total: testPrefectures.length,
-          success: results.successCount,
-          failed: results.failureCount,
-        },
-        results: results,
-      };
-
-      // 実行結果をログに出力
-      logger.info("実行結果", executionResult);
-
-      res.json(executionResult);
+      const result = await processPrefectures(testPrefectures);
+      logger.info("実行結果", result);
+      res.json(result);
     } catch (error) {
       const errorResult = {
         status: "error",
