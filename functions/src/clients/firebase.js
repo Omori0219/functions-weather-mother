@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 
 const FirestoreError = class extends Error {
   constructor(type, message, originalError = null) {
@@ -19,10 +19,26 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
+/**
+ * JavaScriptのDateオブジェクトをFirestore Timestampに変換
+ * @param {Object} data - 変換対象のデータオブジェクト
+ * @returns {Object} Timestamp型に変換されたデータオブジェクト
+ */
+function convertDatesToTimestamps(data) {
+  const converted = { ...data };
+  for (const [key, value] of Object.entries(converted)) {
+    if (value instanceof Date) {
+      converted[key] = Timestamp.fromDate(value);
+    }
+  }
+  return converted;
+}
+
 async function saveDocument(collection, documentId, data) {
   try {
     const docRef = db.collection(collection).doc(documentId);
-    await docRef.set(data);
+    const convertedData = convertDatesToTimestamps(data);
+    await docRef.set(convertedData);
     return { success: true, docRef };
   } catch (error) {
     if (error.code === "permission-denied") {
