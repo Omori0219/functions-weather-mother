@@ -19,8 +19,12 @@ async function saveWeatherData({
 }) {
   try {
     // デバッグ: createdAtの型と値を確認
-    logger.info("Type of createdAt:", typeof createdAt);
-    logger.info("Value of createdAt:", createdAt);
+    logger.debug("Saving weather data", {
+      documentId,
+      areaCode,
+      createdAtType: typeof createdAt,
+      createdAtValue: createdAt,
+    });
 
     const docRef = db.collection(COLLECTION_NAME).doc(documentId);
 
@@ -31,10 +35,16 @@ async function saveWeatherData({
       createdAt: Timestamp.fromDate(createdAt),
     });
 
-    logger.info("Document successfully written!");
+    logger.info("天気予報データの保存に成功しました", {
+      documentId,
+      areaCode,
+    });
     return true;
   } catch (error) {
-    logger.error("Firestore write error", error);
+    logger.error("Firestoreへの書き込みに失敗しました", error, {
+      documentId,
+      areaCode,
+    });
     throw error;
   }
 }
