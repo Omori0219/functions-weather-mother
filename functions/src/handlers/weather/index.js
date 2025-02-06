@@ -2,6 +2,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { processWeatherData } = require("../../core/weather/weather-mother");
 const { PREFECTURE_CODES } = require("../../config/prefectures");
 const logger = require("../../utils/logger");
+const { processWeatherForArea } = require("../../core/weather/weatherService");
 
 // 毎朝6時に実行
 exports.generateWeatherMessages = onSchedule(
@@ -28,11 +29,11 @@ exports.generateWeatherMessages = onSchedule(
       for (const prefecture of PREFECTURE_CODES) {
         logger.info(`${prefecture.name}の処理を開始...`);
         try {
-          const result = await processWeatherData(prefecture.code);
+          const result = await processWeatherForArea(prefecture.code);
           results.success.push({
             prefecture: prefecture.name,
             code: prefecture.code,
-            message: result.motherMessage,
+            message: result.message,
           });
           logger.info(`${prefecture.name}の処理が完了しました！`);
         } catch (error) {
