@@ -22,12 +22,15 @@ async function storeMessage(areaCode, message, weatherData) {
       createdAt: now,
     };
 
-    await saveDocument(COLLECTION_NAME, documentId, data);
+    const { success, docRef } = await saveDocument(COLLECTION_NAME, documentId, data);
 
     logger.info("天気予報データの保存に成功しました", {
       documentId,
       areaCode,
+      docPath: docRef.path,
     });
+
+    return { success, docRef };
   } catch (error) {
     logger.error("メッセージと天気データの保存中にエラーが発生", error, {
       areaCode,
