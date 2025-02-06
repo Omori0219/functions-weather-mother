@@ -8,14 +8,13 @@ async function storeMessage(areaCode, message, weatherData) {
     const documentId = generateDocumentId(areaCode);
     const now = new Date();
 
-    logger.debug("天気予報データの保存を開始", {
+    logger.debug("Firestoreにデータを保存", {
       documentId,
       areaCode,
       messageLength: message.length,
       timestamp: now.toISOString(),
     });
 
-    // 保存するデータの整形
     const data = {
       areaCode,
       weatherForecasts: JSON.stringify(weatherData),
@@ -23,22 +22,17 @@ async function storeMessage(areaCode, message, weatherData) {
       createdAt: now,
     };
 
-    // データの検証
-    if (!message || typeof message !== "string") {
-      throw new Error("不正なメッセージ形式");
-    }
-
     await saveDocument(COLLECTION_NAME, documentId, data);
 
-    logger.info("天気予報データの保存が完了", {
+    logger.info("天気予報データの保存に成功しました", {
       documentId,
       areaCode,
     });
   } catch (error) {
-    logger.error("天気予報データの保存中にエラーが発生", error, {
+    logger.error("メッセージと天気データの保存中にエラーが発生", error, {
       areaCode,
-      step: "store_message",
     });
+    error.step = "store_message";
     throw error;
   }
 }
