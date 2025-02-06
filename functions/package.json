@@ -7,7 +7,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "node src/core/batch-processor.js",
+    "test": "node src/core/weather/batch-processor.js",
     "test:single": "node -e \"require('./src/core/weather/weather-mother.js').processWeatherData('130000')\""
   },
   "engines": {
